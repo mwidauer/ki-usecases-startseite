@@ -2,20 +2,21 @@
 
 ## Projektziel
 
-Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund stellt und den schnellen Aufruf passender Tools ermöglicht. Die Seite läuft vollständig lokal (kein Server erforderlich) und wird über einen Browser-Favoriten geöffnet.
+Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund stellt und den schnellen Aufruf passender Tools ermöglicht. Die Seite läuft auf einem lokalen Python-Server und wird über `http://localhost:8080` im Browser geöffnet.
 
-Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale Desktop-Apps** (Windows-Programme, die über einen einmalig installierten Protokoll-Handler gestartet werden).
+Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale Desktop-Apps** (Windows-Programme, die über einen einmalig installierten Protokoll-Handler gestartet werden). Terminal-Anwendungen (CLI-Tools) sind nicht Teil des Projekts.
 
 ---
 
 ## Technologie-Stack
 
 - **Frontend:** Reines HTML5 + CSS3 + Vanilla JavaScript (keine Build-Tools, kein Framework)
-- **Datenhaltung:** `localStorage` für Konfiguration (Anwendungsfälle, Tools, Links)
-- **Einstiegspunkt:** `index.html` – direkt als `file://`-URL im Browser öffnen
+- **Server:** Python 3 (`http.server` Standardbibliothek) – keine externen Pakete
+- **Datenhaltung:** `user-config.json` (via `POST /api/config`), Fallback auf `data.json`
+- **Einstiegspunkt:** `start.bat` → startet `server.py` → öffnet Browser auf `http://localhost:8080`
+- **Python-Bereitstellung:** System-Python falls vorhanden, sonst eingebettetes Python in `python/` (automatisch heruntergeladen durch `setup/get-python.ps1`)
 - **Icons:** PNG-Dateien (1024×1024), generiert mit DALL·E 3, gespeichert unter `./icons/`
 - **Icon-Generierung:** Python-Skript (`generate_icons.py`) ruft OpenAI Images API auf
-- **Konfiguration:** `.env`-Datei mit `OPENAI_API_KEY`
 - **Lokale Apps:** `launchers/local-apps.js` (Browser-Liste) + `launchers/apps.json` (Exe-Pfade) + `launchers/universal-launcher.ps1` (Startskript)
 
 ---
@@ -26,14 +27,20 @@ Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale 
 /
 ├── index.html              # Startseite (Haupteinstieg)
 ├── settings.html           # Wartungsoberfläche
-├── app.js                  # Hauptlogik (Laden, Rendern, Navigation)
-├── settings.js             # Logik der Wartungsoberfläche
+├── app.js                  # Hauptlogik (Laden via /api/config, Rendern, Navigation)
+├── settings.js             # Logik der Wartungsoberfläche (async fetch)
 ├── style.css               # Gemeinsames Stylesheet
-├── data.json               # Standard-Konfiguration (Anwendungsfälle + Tools)
+├── server.py               # HTTP-Server: statische Dateien + GET/POST /api/config
+├── start.bat               # Starter: prüft Python, lädt es ggf. herunter, startet server.py
+├── data.json               # Standard-Konfiguration (Vorlage beim ersten Start)
+├── user-config.json        # Persönliche Konfiguration (nicht eingecheckt, von server.py geschrieben)
 ├── generate_icons.py       # Icon-Generator (DALL·E 3)
 ├── favicon.svg             # Browser-Tab-Icon
 ├── .env                    # OPENAI_API_KEY (nicht einchecken)
 ├── .gitignore
+├── setup/
+│   └── get-python.ps1      # Lädt Python Embeddable Package (~10 MB) nach python/ herunter
+├── python/                 # Eingebettetes Python (nicht eingecheckt, automatisch heruntergeladen)
 ├── icons/
 │   ├── icon_01_dokumente.png
 │   └── ... (bis icon_10_praesentation.png)
@@ -42,8 +49,27 @@ Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale 
     ├── apps.json               # Exe-Pfade für den PowerShell-Launcher
     ├── universal-launcher.ps1  # Startet lokale Apps anhand von apps.json
     ├── localapp-launcher.bat   # Wrapper: ruft universal-launcher.ps1 auf
-    └── install-protocol-handler.ps1  # Registriert localapp:// in der Windows-Registry (einmalig)
+    ├── install-protocol-handler.ps1  # Registriert localapp:// in der Windows-Registry
+    └── install.bat             # Starter für den Protokoll-Handler-Installer
 ```
+
+---
+
+## Server (`server.py`)
+
+### Endpunkte
+
+| Methode | Pfad | Funktion |
+|---------|------|----------|
+| `GET` | `/api/config` | Liefert `user-config.json` (falls vorhanden), sonst `data.json` |
+| `POST` | `/api/config` | Speichert Body als `user-config.json` (JSON-Validierung vorab) |
+| `GET` | `/*` | Statische Dateien (SimpleHTTPRequestHandler) |
+
+### Python-Priorität beim Start
+
+1. `python/python.exe` (eingebettetes Python, falls vorhanden)
+2. System-Python (`python` im PATH)
+3. Angebot: eingebettetes Python automatisch herunterladen via `setup/get-python.ps1`
 
 ---
 
@@ -58,10 +84,13 @@ Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale 
 
 ### Tool-Auswahl im Modal
 - **Web-Tools:** Name + Favicon + direkter Link (öffnet in neuem Tab)
-- **Lokale Apps:** Name + Desktop-Icon (💻) + „Starten"-Button → startet das Programm via `localapp://` Protokoll
+- **Lokale Apps:** Name + Emoji-Icon + „Starten"-Button → startet via `localapp://` Protokoll
+
+### Fehlerbehandlung
+- Wenn `/api/config` nicht erreichbar: Fehlermeldung im Grid mit Hinweis auf `start.bat`
 
 ### Navigation
-- Oben rechts: Zahnrad-Icon → Link zu `settings.html` ("Einstellungen")
+- Oben rechts: Zahnrad-Icon → Link zu `settings.html`
 
 ---
 
@@ -71,11 +100,11 @@ Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale 
 - **Anwendungsfälle verwalten:** Hinzufügen, umbenennen, löschen, Reihenfolge ändern
 - **Tools verwalten:** Pro Anwendungsfall Tools hinzufügen, entfernen
   - **Web-Tool:** Name + URL eingeben
-  - **Lokale App:** Checkbox „Lokale App" aktivieren → Dropdown mit verfügbaren Desktop-Apps erscheint
+  - **Lokale App:** Checkbox „Lokale App" aktivieren → Dropdown mit verfügbaren Desktop-Apps (aus `LOCAL_APPS`)
 - **Icon zuweisen:** Pfad zu einer PNG-Datei unter `./icons/` eintragen
-- **Speichern:** Konfiguration in `localStorage` persistieren
+- **Speichern:** `POST /api/config` mit aktuellem config-Objekt
 - **Export/Import:** Konfiguration als JSON exportieren/importieren (Backup)
-- **Reset:** Auf Standard-Konfiguration zurücksetzen
+- **Reset:** Auf Standard-Konfiguration zurücksetzen (schreibt DEFAULT_DATA via POST)
 
 ### Zugang
 - Link auf der Startseite: Zahnrad-Icon oben rechts → `settings.html`
@@ -86,193 +115,68 @@ Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale 
 
 ### Konzept
 
-Das System unterscheidet zwei Tool-Typen:
-
 | Typ | Merkmal | Beispiel |
 |-----|---------|---------|
 | Web-Tool | URL (https://...) | NotebookLM, Claude, Perplexity Web |
 | Lokale App | `"local": true` + URL `localapp://key` | Perplexity Desktop, Claude Desktop, Comet |
 
-Terminal-Anwendungen (CLI-Tools) sind **nicht Teil des Projekts**.
-
 ### Zwei-Datei-Prinzip
-
-**Problem:** Browser-`file://`-Seiten können keine lokalen Dateien per `fetch()` laden.
-
-**Lösung:** Zwei getrennte Dateien mit unterschiedlichen Rollen:
 
 | Datei | Geladen von | Inhalt |
 |-------|-------------|--------|
-| `launchers/local-apps.js` | Browser (als `<script>`-Tag) | Name, Key, Emoji-Icon aller Apps – für das Dropdown in den Einstellungen |
-| `launchers/apps.json` | PowerShell-Launcher | Exe-Pfade und App-IDs – für den tatsächlichen Start |
+| `launchers/local-apps.js` | Browser (als `<script>`-Tag) | Name, Key, Emoji-Icon aller Apps |
+| `launchers/apps.json` | PowerShell-Launcher | Exe-Pfade und App-IDs |
 
-Beide Dateien müssen synchron gehalten werden, wenn eine neue App hinzugefügt wird.
+Beide Dateien synchron halten wenn eine neue App hinzugefügt wird.
 
-### `launchers/local-apps.js` (Browser-Liste)
+### Unterstützte App-Typen in `apps.json`
 
-```javascript
-// Globale Variable – wird von index.html und settings.html als <script> geladen
-const LOCAL_APPS = [
-  { key: 'claude-desktop', name: 'Claude Desktop', icon: '🤖' },
-  { key: 'perplexity',     name: 'Perplexity',      icon: '🔍' },
-  { key: 'comet',          name: 'Comet Browser',   icon: '🌐' }
-];
-```
-
-### `launchers/apps.json` (Exe-Pfade für Launcher)
-
-```json
-{
-  "claude-desktop": {
-    "type": "appid",
-    "appid": "Claude_pzs8sxrjxfjjc!Claude"
-  },
-  "perplexity": {
-    "type": "exe",
-    "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe"
-  },
-  "comet": {
-    "type": "exe",
-    "path": "%LOCALAPPDATA%\\Perplexity\\Comet\\Application\\comet.exe"
-  }
-}
-```
-
-Unterstützte Typen in `apps.json`:
 - `"type": "exe"` – direkter Start einer `.exe`-Datei; `%APPDATA%`, `%LOCALAPPDATA%` etc. werden expandiert
-- `"type": "appid"` – Start einer Windows Store/MSIX-App über ihre AppUserModelId
+- `"type": "appid"` – Start einer Windows Store/MSIX-App über AppUserModelId
 
 ### Protokoll-Handler (`localapp://`)
 
-- Einmalig auf dem Rechner zu installieren: **Rechtsklick auf `launchers/install-protocol-handler.ps1` → „Mit PowerShell ausführen"**
-- Registriert den Schlüssel `HKCU\SOFTWARE\Classes\localapp` (kein Admin-Recht nötig)
-- Der Handler ruft `localapp-launcher.bat` auf, das `universal-launcher.ps1 -Url "%1"` aufruft
-- `universal-launcher.ps1` liest `apps.json`, findet den passenden Eintrag und startet die App
+Ablauf: `Browser → localapp://key → Windows-Registry → localapp-launcher.bat → universal-launcher.ps1 → App`
 
-### Ablauf: Klick auf lokale App
+Einmalig installieren: **Doppelklick auf `launchers/install.bat`**
 
-```
-Browser (index.html)
-  → Klick auf "Starten" (a href="localapp://perplexity")
-  → Windows-Registry: localapp:// → localapp-launcher.bat
-  → localapp-launcher.bat → powershell.exe universal-launcher.ps1 -Url "localapp://perplexity"
-  → universal-launcher.ps1 → liest apps.json → Start-Process Perplexity.exe
-```
+### Neue App hinzufügen
 
-### Neue App hinzufügen (Workflow)
-
-1. Exe-Pfad herausfinden (z. B. per Windows Explorer oder Suchbefehl)
+1. Exe-Pfad/AppId herausfinden
 2. Eintrag in `launchers/apps.json` ergänzen
 3. Eintrag in `launchers/local-apps.js` ergänzen (key, name, icon)
-4. In den Einstellungen der Startseite: Tool hinzufügen → „Lokale App" ankreuzen → App aus Dropdown wählen
+4. In den Einstellungen: Tool hinzufügen → „Lokale App" → App aus Dropdown wählen
 
 ---
 
 ## Anwendungsfälle und Tools
 
-### Übersicht
-
-| # | Anwendungsfall | KI-Tool | DALL·E Prompt-Begriff |
-|---|---------------|---------|----------------------|
-| 1 | Tiefe Dokumenten-Recherche & Lernen | NotebookLM | deep document research and learning |
-| 2 | Web-Recherche & Daten-Scraping | Perplexity (Comet) | web research and data scraping |
-| 3 | Texterstellung & Schnittstellen-Automatisierung | Claude | text creation and workflow automation |
-| 4 | Prozess-Automatisierung | n8n | process automation workflow |
-| 5 | Prototyping & MVPs (ohne Code) | Google AI Studio | rapid prototyping no code |
-| 6 | App-Entwicklung & Programmierung | Cursor | app development and programming |
-| 7 | Lokale Corporate LLMs (Datenschutz) | Ollama | local private AI data protection |
-| 8 | Voice AI & KI-Sprachagenten | ElevenLabs | voice AI speech agent |
-| 9 | Videogenerierung & Werbefilme | Google Flow (mit Veo) | video generation advertising |
-| 10 | Präsentationserstellung | Gamma (gamma.app) | AI presentation creation |
-
-### Tool-Objekt-Format in `data.json`
-
-```json
-// Web-Tool:
-{ "name": "NotebookLM", "url": "https://notebooklm.google.com" }
-
-// Lokale App:
-{ "name": "Perplexity Desktop", "url": "localapp://perplexity", "local": true }
-```
+| # | Anwendungsfall | KI-Tool |
+|---|---------------|---------|
+| 1 | Dokumenten-Recherche & Lernen | NotebookLM |
+| 2 | Web-Recherche & Daten-Scraping | Perplexity |
+| 3 | Texterstellung & Automatisierung | Claude |
+| 4 | Prozess-Automatisierung | n8n |
+| 5 | Prototyping & MVPs (ohne Code) | Google AI Studio |
+| 6 | App-Entwicklung & Programmierung | Cursor |
+| 7 | Lokale Corporate LLMs (Datenschutz) | Ollama |
+| 8 | Voice AI & KI-Sprachagenten | ElevenLabs |
+| 9 | Videogenerierung & Werbefilme | Google Flow (Veo) |
+| 10 | Präsentationserstellung | Gamma |
 
 ---
 
 ## Icon-Generierung
 
-### DALL·E 3 Stil (für alle Icons einheitlich)
+### DALL·E 3 Stil
 
 > Isometric dark mode illustration. Deep navy background. Small 3D human figures
 > with oversized tech objects. Neon accents: cyan, purple, mint green with soft glow.
 > Dark slate objects with bright highlights. No text. Consistent style across all icons.
 
-### DALL·E 3 Prompts (alle 10 Anwendungsfälle)
-
-```
-icon_01 – Dokumenten-Recherche & Lernen:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-reading oversized glowing documents and PDFs with magnifying glass. Neon accents:
-cyan, purple, mint green with soft glow. Dark slate objects with bright highlights.
-No text.
-
-icon_02 – Web-Recherche & Daten-Scraping:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-navigating oversized web browser windows with data flowing into a structured table.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_03 – Texterstellung & Automatisierung:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-operating oversized keyboard with automated workflow gears and text streams.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_04 – Prozess-Automatisierung:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-connecting oversized automation nodes in a flowing pipeline with robotic arms.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_05 – Prototyping & MVPs:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-assembling oversized app wireframe blocks and UI components like building bricks.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_06 – App-Entwicklung & Programmierung:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-beside oversized monitor with code lines and AI robot co-pilot writing code.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_07 – Lokale Corporate LLMs:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-standing inside a secure server vault with a brain and shield icon on local server.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_08 – Voice AI & KI-Sprachagenten:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-speaking into an oversized microphone with AI waveforms and phone agent headset.
-Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
-bright highlights. No text.
-
-icon_09 – Videogenerierung & Werbefilme:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-directing an oversized cinematic camera with AI-generated film frames floating
-around. Neon accents: cyan, purple, mint green with soft glow. Dark slate objects
-with bright highlights. No text.
-
-icon_10 – Präsentationserstellung:
-Isometric dark mode illustration. Deep navy background. Small 3D human figure
-presenting oversized glowing slides with charts auto-assembling from notes and
-data. Neon accents: cyan, purple, mint green with soft glow. Dark slate objects
-with bright highlights. No text.
-```
-
 ### Icon-Generator (`generate_icons.py`)
 
 - Liest `OPENAI_API_KEY` aus `.env`
-- Generiert für jeden Anwendungsfall einen DALL·E-3-Prompt
 - Ruft OpenAI Images API auf: Modell `dall-e-3`, Size `1024x1024`, Quality `standard`
 - Speichert Bilder als `icons/icon_NN_name.png`
 
@@ -284,35 +188,18 @@ with bright highlights. No text.
 |------------|------|
 | Hintergrundfarbe | `#0a0f1e` (Deep Navy) |
 | Akzentfarben | Cyan `#00d4ff`, Purple `#8b5cf6`, Mint `#10d9a0` |
-| Schriftart | System-Font oder `Inter` (Google Fonts) |
-| Kachel-Größe | 180×180px (Desktop), responsive kleinere Breakpoints |
+| Schriftart | System-Font oder `Inter` |
+| Kachel-Größe | 180×180px (Desktop), responsive |
 | Kachel-Stil | Abgerundete Ecken, leichter Glow-Effekt |
 | Hover | Sanfte Vergrößerung + Tool-Namen einblenden |
-| Lokale App (Modal) | Lila Akzent (`--purple`), Badge „Starten ↗" |
-
----
-
-## Implementierungsreihenfolge
-
-1. **`data.json`** – Aus CLAUDE.md übernehmen (alle 10 Anwendungsfälle)
-2. **`generate_icons.py`** – Icon-Generator erstellen und alle Icons generieren
-3. **`style.css`** – Gemeinsames Stylesheet mit Dark-Mode-Design
-4. **`index.html` + `app.js`** – Startseite mit Kacheln und Tool-Modal
-5. **`settings.html` + `settings.js`** – Wartungsoberfläche
-6. **`launchers/local-apps.js`** – Browser-Liste der lokalen Apps
-7. **`launchers/apps.json`** – Exe-Pfade (manuell oder per Skript ermittelt)
-8. **`launchers/universal-launcher.ps1`** + **`localapp-launcher.bat`** – Launcher-Skripte
-9. **`launchers/install-protocol-handler.ps1`** – Protokoll-Handler registrieren (einmalig)
-10. **Testing** – Öffnen als `file://`, Favorit im Browser anlegen
 
 ---
 
 ## Wichtige Hinweise
 
-- `.env` enthält den OpenAI API Key → **nicht in Git einchecken** (in `.gitignore`)
-- `icons/` wird ebenfalls nicht eingecheckt (groß, generiert)
-- Die Seite funktioniert als `file://`-URL ohne lokalen Webserver
-- `localStorage` wird als Datenspeicher genutzt; `data.json` ist nur der Initialzustand
+- `.env` enthält den OpenAI API Key → **nicht in Git einchecken**
+- `user-config.json` enthält persönliche Konfiguration → in `.gitignore` für `main`, im `personal`-Branch committen
+- `python/` enthält eingebettetes Python → immer in `.gitignore`, automatisch heruntergeladen
 - Alle externen Tool-Links öffnen in `target="_blank"`
 - Der `localapp://`-Protokoll-Handler muss **einmalig pro Rechner** installiert werden
 - Terminal-Apps (CLI-Tools) werden **nicht unterstützt** – nur Desktop-Apps mit GUI

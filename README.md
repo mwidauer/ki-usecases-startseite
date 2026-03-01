@@ -49,7 +49,10 @@ git clone https://github.com/mwidauer/ki-usecases-startseite.git
 → **Doppelklick auf `start.bat`**
 
 Der Server startet auf `http://localhost:8080` und öffnet den Browser automatisch.
-Python 3 muss installiert sein (keine weiteren Pakete nötig).
+
+**Python wird automatisch bereitgestellt** – keine manuelle Installation nötig:
+- Falls Python bereits installiert ist, wird es direkt verwendet
+- Falls nicht, bietet `start.bat` an, ein eingebettetes Python (~10 MB) automatisch herunterzuladen
 
 > Die Konfiguration wird als `user-config.json` im Projektordner gespeichert.
 > Beim ersten Start wird `data.json` als Vorlage verwendet.
@@ -257,9 +260,12 @@ with bright highlights. No text.
 ├── settings.js                   # Einstellungs-Logik
 ├── style.css                     # Stylesheet (Dark Mode)
 ├── server.py                     # Lokaler HTTP-Server (Konfiguration lesen/schreiben)
-├── start.bat                     # Server starten (Doppelklick)
+├── start.bat                     # Server starten (Doppelklick, lädt Python falls nötig)
 ├── data.json                     # Standard-Konfiguration (Vorlage)
 ├── user-config.json              # Persönliche Konfiguration (nicht eingecheckt)
+├── setup/
+│   └── get-python.ps1            # Lädt eingebettetes Python herunter (von start.bat aufgerufen)
+├── python/                       # Eingebettetes Python (nicht eingecheckt, auto-heruntergeladen)
 ├── favicon.svg                   # Browser-Tab-Icon
 ├── generate_icons.py             # Icon-Generator (DALL·E 3)
 ├── .env                          # OpenAI API Key (nicht eingecheckt)
@@ -279,7 +285,8 @@ with bright highlights. No text.
 
 ## Hinweise
 
-- `.env` und `user-config.json` sind in `.gitignore` und werden nicht eingecheckt
+- `.env`, `user-config.json` und `python/` sind in `.gitignore` und werden nicht eingecheckt
 - `user-config.json` enthält die persönliche Konfiguration; `data.json` ist die Vorlage beim ersten Start
+- `python/` wird automatisch durch `start.bat` heruntergeladen wenn kein System-Python gefunden wird
 - Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt
-- Bei einem neuen Rechner: `install.bat` und `start.bat` einmalig ausführen
+- Bei einem neuen Rechner: `launchers/install.bat` und `start.bat` einmalig ausführen

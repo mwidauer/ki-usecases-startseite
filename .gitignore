@@ -4,6 +4,10 @@
 # Persönliche Konfiguration (im personal-Branch committen, nicht in main)
 user-config.json
 
+# Eingebettetes Python (automatisch heruntergeladen durch start.bat)
+python/
+python-embed.zip
+
 # Secrets & Umgebungsvariablen
 .env
 .env.local

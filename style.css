@@ -325,6 +325,34 @@ a {
   font-size: 0.8rem;
 }
 
+/* Lokale Desktop-App (kein Web-Link) */
+.modal__tool-link--local {
+  cursor: default;
+  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.modal__tool-link--local:hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.15);
+  color: var(--text);
+}
+
+.modal__tool-link--local .local-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.modal__tool-link--local .local-badge {
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--purple);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 20px;
+  padding: 0.1rem 0.5rem;
+  white-space: nowrap;
+}
+
 /* --- Settings Page ---------------------------------------- */
 .settings-main {
   padding: 2rem;

@@ -60,7 +60,8 @@ const DEFAULT_DATA = {
       "icon": "icons/icon_06_programmierung.png",
       "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen",
       "tools": [
-        { "name": "Cursor", "url": "https://www.cursor.com" }
+        { "name": "Cursor", "url": "https://www.cursor.com" },
+        { "name": "Claude Code", "url": "", "local": true }
       ]
     },
     {
@@ -211,6 +212,30 @@ function openModal(uc) {
     toolList.appendChild(empty);
   } else {
     uc.tools.forEach(tool => {
+      // Lokale App (kein URL) → nicht-klickbares Element
+      if (tool.local || !tool.url) {
+        const div = document.createElement('div');
+        div.className = 'modal__tool-link modal__tool-link--local';
+
+        const icon = document.createElement('span');
+        icon.className = 'local-icon';
+        icon.textContent = '💻';
+        div.appendChild(icon);
+
+        const label = document.createElement('span');
+        label.textContent = tool.name;
+        div.appendChild(label);
+
+        const badge = document.createElement('span');
+        badge.className = 'local-badge';
+        badge.textContent = 'Lokale App';
+        div.appendChild(badge);
+
+        toolList.appendChild(div);
+        return;
+      }
+
+      // Web-Tool → klickbarer Link
       const a = document.createElement('a');
       a.className = 'modal__tool-link';
       a.href = tool.url;

@@ -1,5 +1,5 @@
 {
-  "_readme": "Jede lokale App hier eintragen. Typ 'exe' fuer Desktop-Apps, 'terminal' fuer CLI-Tools. Umgebungsvariablen wie %LOCALAPPDATA% und %APPDATA% werden unterstuetzt. URL auf der Startseite: localapp://schluessel",
+  "_readme": "Jede lokale App hier eintragen. Typen: 'exe' (Desktop-App), 'terminal' (CLI-Tool), 'appid' (Windows-Store/MSIX-App). Umgebungsvariablen wie %LOCALAPPDATA% und %APPDATA% werden unterstuetzt. URL auf der Startseite: localapp://schluessel",
 
   "claude-code": {
     "type": "terminal",
@@ -7,11 +7,26 @@
     "title": "Claude Code"
   },
 
-  "_beispiele_auskommentiert": {
-    "perplexity":      { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe" },
-    "claude-desktop":  { "type": "exe", "path": "%LOCALAPPDATA%\\AnthropicClaude\\claude.exe" },
-    "comet":           { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Comet\\Comet.exe" },
-    "cursor":          { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe" },
-    "obsidian":        { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\obsidian\\Obsidian.exe" }
+  "claude-desktop": {
+    "type": "appid",
+    "appid": "Claude_pzs8sxrjxfjjc!Claude",
+    "title": "Claude Desktop"
+  },
+
+  "perplexity": {
+    "type": "exe",
+    "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe"
+  },
+
+  "comet": {
+    "type": "exe",
+    "path": "%LOCALAPPDATA%\\Perplexity\\Comet\\Application\\comet.exe"
+  },
+
+  "_weitere_beispiele": {
+    "_hinweis": "Diese Eintraege sind Vorlagen – kopieren und umbenennen",
+    "cursor":   { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe" },
+    "obsidian": { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\obsidian\\Obsidian.exe" },
+    "notion":   { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Notion\\Notion.exe" }
   }
 }

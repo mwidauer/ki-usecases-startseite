@@ -67,7 +67,18 @@ switch ($app.type) {
         }
     }
 
+    'appid' {
+        # Windows Store / MSIX Apps via AppUserModelId starten
+        # Beispiel: "Claude_pzs8sxrjxfjjc!Claude"
+        $appId = $app.appid
+        try {
+            Start-Process "shell:AppsFolder\$appId"
+        } catch {
+            Show-Error "MSIX-App konnte nicht gestartet werden:`n$appId`n`nFehler: $_"
+        }
+    }
+
     default {
-        Show-Error "Unbekannter App-Typ: '$($app.type)'`nErlaubt: 'exe' oder 'terminal'"
+        Show-Error "Unbekannter App-Typ: '$($app.type)'`nErlaubt: 'exe', 'terminal' oder 'appid'"
     }
 }

@@ -15,7 +15,7 @@ const DEFAULT_DATA = {
     { "id": 3, "name": "Texterstellung & Automatisierung", "icon": "icons/icon_03_texterstellung.png", "description": "Schreiben natürlicher Texte, Erstellen spezialisierter Workflows für Textprüfungen, automatische Datenbank- und CRM-Anbindung via Model Context Protocol (MCP) und On-the-fly-Code-Generierung", "tools": [{ "name": "Claude", "url": "https://claude.ai" }] },
     { "id": 4, "name": "Prozess-Automatisierung", "icon": "icons/icon_04_automatisierung.png", "description": "Lokale und quelloffene Automatisierung von Workflows, z. B. CRM-Updates, Leadgenerierung, Datenanreicherung, Social Media Automatisierung, Onboarding-Prozesse und Belegerkennung", "tools": [{ "name": "n8n", "url": "https://n8n.io" }] },
     { "id": 5, "name": "Prototyping & MVPs (ohne Code)", "icon": "icons/icon_05_prototyping.png", "description": "Schnelles visuelles Testen und Bauen von App-Prototypen in einer Sandbox, Erstellung von Frontends zur Kundenpräsentation ohne Programmierkenntnisse", "tools": [{ "name": "Google AI Studio", "url": "https://aistudio.google.com" }] },
-    { "id": 6, "name": "App-Entwicklung & Programmierung", "icon": "icons/icon_06_programmierung.png", "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen", "tools": [{ "name": "Cursor", "url": "https://www.cursor.com" }, { "name": "Claude Code", "url": "", "local": true }] },
+    { "id": 6, "name": "App-Entwicklung & Programmierung", "icon": "icons/icon_06_programmierung.png", "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen", "tools": [{ "name": "Cursor", "url": "https://www.cursor.com" }, { "name": "Claude Code", "url": "claudecode://launch", "local": true }] },
     { "id": 7, "name": "Lokale Corporate LLMs (Datenschutz)", "icon": "icons/icon_07_corporate-llm.png", "description": "Aufbau von KI-Systemen für internes Firmenwissen, lokale und komplett DSGVO-konforme Verarbeitung sensibler Daten auf eigenen Servern", "tools": [{ "name": "Ollama", "url": "https://ollama.com" }] },
     { "id": 8, "name": "Voice AI & KI-Sprachagenten", "icon": "icons/icon_08_voice-ai.png", "description": "Vertonung von Videos mit mehreren Sprechern und Soundeffekten, Erstellung natürlich klingender KI-Telefon-Agenten für Rezeptionen, Outbound-Sales, Leads-Generierung oder Terminverwaltung", "tools": [{ "name": "ElevenLabs", "url": "https://elevenlabs.io" }] },
     { "id": 9, "name": "Videogenerierung & Werbefilme", "icon": "icons/icon_09_video.png", "description": "Erstellung von cinematischen Clips, Werbespots und Erklärvideos aus einfachen Storyboards oder Fotos, Sicherstellung von Charakter- und Produktkonsistenz über mehrere Szenen hinweg", "tools": [{ "name": "Google Flow (Veo)", "url": "https://flow.google" }] },
@@ -197,26 +197,32 @@ function closeDrawer() {
 function renderToolsEditor(tools) {
   const container = document.getElementById('toolsContainer');
   container.innerHTML = '';
-  tools.forEach((t, i) => addToolRow(t.name, t.url, i));
+  tools.forEach((t, i) => addToolRow(t.name, t.url, t.local || false, i));
 }
 
-function addToolRow(name = '', url = '', idx = null) {
+function addToolRow(name = '', url = '', local = false, idx = null) {
   const container = document.getElementById('toolsContainer');
+
   const row = document.createElement('div');
   row.className = 'tool-row';
-  row.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center';
+  row.style.cssText = 'display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:var(--bg);border:1px solid var(--border);border-radius:8px';
+
+  // Zeile 1: Name + URL
+  const inputRow = document.createElement('div');
+  inputRow.style.cssText = 'display:flex;gap:0.5rem;align-items:center';
 
   const nameInput = document.createElement('input');
   nameInput.className = 'form-input';
-  nameInput.placeholder = 'Name (z. B. Perplexity)';
+  nameInput.placeholder = 'Name (z. B. Claude Code)';
   nameInput.value = name;
   nameInput.style.flex = '1';
 
   const urlInput = document.createElement('input');
   urlInput.className = 'form-input';
-  urlInput.placeholder = 'URL (https://...)';
+  urlInput.placeholder = local ? 'claudecode:// (optional)' : 'URL (https://...)';
   urlInput.value = url;
   urlInput.style.flex = '2';
+  if (local) urlInput.style.opacity = '0.6';
 
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
@@ -225,9 +231,38 @@ function addToolRow(name = '', url = '', idx = null) {
   removeBtn.style.cssText = 'padding:0.35rem 0.6rem;font-size:0.8rem;flex-shrink:0';
   removeBtn.addEventListener('click', () => row.remove());
 
-  row.appendChild(nameInput);
-  row.appendChild(urlInput);
-  row.appendChild(removeBtn);
+  inputRow.appendChild(nameInput);
+  inputRow.appendChild(urlInput);
+  inputRow.appendChild(removeBtn);
+
+  // Zeile 2: Lokal-Checkbox
+  const checkRow = document.createElement('label');
+  checkRow.style.cssText = 'display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;color:var(--text-muted);cursor:pointer;user-select:none';
+
+  const checkbox = document.createElement('input');
+  checkbox.type    = 'checkbox';
+  checkbox.checked = local;
+  checkbox.style.cssText = 'accent-color:var(--purple);cursor:pointer';
+
+  const hint = document.createElement('span');
+  hint.textContent = local
+    ? '💻 Lokale App – URL optional (z. B. claudecode://launch)'
+    : '💻 Lokale Desktop-App (kein Web-Link erforderlich)';
+
+  checkbox.addEventListener('change', () => {
+    const isLocal = checkbox.checked;
+    urlInput.placeholder = isLocal ? 'claudecode:// (optional)' : 'URL (https://...)';
+    urlInput.style.opacity = isLocal ? '0.6' : '1';
+    hint.textContent = isLocal
+      ? '💻 Lokale App – URL optional (z. B. claudecode://launch)'
+      : '💻 Lokale Desktop-App (kein Web-Link erforderlich)';
+  });
+
+  checkRow.appendChild(checkbox);
+  checkRow.appendChild(hint);
+
+  row.appendChild(inputRow);
+  row.appendChild(checkRow);
   container.appendChild(row);
 }
 
@@ -235,10 +270,15 @@ function collectTools() {
   const rows = document.querySelectorAll('.tool-row');
   const tools = [];
   rows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const name = inputs[0].value.trim();
-    const url  = inputs[1].value.trim();
-    if (name && url) tools.push({ name, url });
+    const inputs   = row.querySelectorAll('input[type="text"], input:not([type])');
+    const checkbox = row.querySelector('input[type="checkbox"]');
+    const name     = inputs[0]?.value.trim();
+    const url      = inputs[1]?.value.trim() || '';
+    const local    = checkbox?.checked || false;
+    if (!name) return;
+    const tool = { name, url };
+    if (local) tool.local = true;
+    tools.push(tool);
   });
   return tools;
 }

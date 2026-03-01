@@ -61,7 +61,7 @@ const DEFAULT_DATA = {
       "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen",
       "tools": [
         { "name": "Cursor", "url": "https://www.cursor.com" },
-        { "name": "Claude Code", "url": "", "local": true }
+        { "name": "Claude Code", "url": "claudecode://launch", "local": true }
       ]
     },
     {
@@ -212,26 +212,34 @@ function openModal(uc) {
     toolList.appendChild(empty);
   } else {
     uc.tools.forEach(tool => {
-      // Lokale App (kein URL) → nicht-klickbares Element
-      if (tool.local || !tool.url) {
-        const div = document.createElement('div');
-        div.className = 'modal__tool-link modal__tool-link--local';
+      // Lokale App → mit URL klickbar, ohne URL nur Badge
+      if (tool.local) {
+        const el = tool.url
+          ? document.createElement('a')
+          : document.createElement('div');
+
+        el.className = 'modal__tool-link modal__tool-link--local';
+
+        if (tool.url) {
+          el.href   = tool.url;
+          el.title  = 'Lokale App starten';
+        }
 
         const icon = document.createElement('span');
-        icon.className = 'local-icon';
+        icon.className   = 'local-icon';
         icon.textContent = '💻';
-        div.appendChild(icon);
+        el.appendChild(icon);
 
         const label = document.createElement('span');
         label.textContent = tool.name;
-        div.appendChild(label);
+        el.appendChild(label);
 
         const badge = document.createElement('span');
-        badge.className = 'local-badge';
-        badge.textContent = 'Lokale App';
-        div.appendChild(badge);
+        badge.className   = 'local-badge';
+        badge.textContent = tool.url ? 'Starten ↗' : 'Lokale App';
+        el.appendChild(badge);
 
-        toolList.appendChild(div);
+        toolList.appendChild(el);
         return;
       }
 

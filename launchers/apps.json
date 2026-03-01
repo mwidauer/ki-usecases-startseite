@@ -1,23 +1,10 @@
 {
   "_readme": "Exe-Pfade fuer lokale Desktop-Apps. Typ 'exe': direkter Start einer .exe-Datei. Typ 'appid': Windows Store/MSIX-App via AppUserModelId. Umgebungsvariablen wie %LOCALAPPDATA% werden expandiert. Neue App: hier UND in local-apps.js eintragen.",
 
-  "claude-desktop": {
-    "type": "appid",
-    "appid": "Claude_pzs8sxrjxfjjc!Claude"
-  },
-
-  "perplexity": {
-    "type": "exe",
-    "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe"
-  },
-
-  "comet": {
-    "type": "exe",
-    "path": "%LOCALAPPDATA%\\Perplexity\\Comet\\Application\\comet.exe"
-  },
-
-  "_weitere_beispiele": {
-    "_hinweis": "Diese Eintraege sind Vorlagen – kopieren und umbenennen",
+  "_beispiele": {
+    "_hinweis": "Diese Eintraege sind Vorlagen – umbenennen und in das Hauptobjekt uebernehmen",
+    "meine-exe-app": { "type": "exe",   "path": "%LOCALAPPDATA%\\Programs\\MeineApp\\MeineApp.exe" },
+    "meine-store-app": { "type": "appid", "appid": "PublisherName.AppName_hash!App" },
     "cursor":   { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe" },
     "obsidian": { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\obsidian\\Obsidian.exe" },
     "notion":   { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Notion\\Notion.exe" }

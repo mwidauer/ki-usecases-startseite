@@ -8,43 +8,43 @@ echo ==========================================
 echo  KI-Usecases Startseite
 echo ==========================================
 echo.
+echo Projektordner: %DIR%
+echo.
 
 :: server.py vorhanden?
 if not exist "%DIR%server.py" (
-    echo FEHLER: server.py nicht gefunden.
-    echo Bitte sicherstellen, dass start.bat im Projektordner liegt.
-    echo Aktueller Ordner: %DIR%
+    echo FEHLER: server.py nicht gefunden in:
+    echo %DIR%
     echo.
     pause
     exit /b 1
 )
 
-:: Priorität 1: Eingebettetes Python (python\python.exe)
+:: Priorität 1: Eingebettetes Python
 if exist "%PYTHON_LOCAL%" (
-    echo Starte Server (eingebettetes Python)...
+    echo Python: eingebettet [%PYTHON_LOCAL%]
+    echo.
     "%PYTHON_LOCAL%" "%DIR%server.py"
-    if %ERRORLEVEL% NEQ 0 (
-        echo.
-        echo Server beendet mit Fehlercode %ERRORLEVEL%
-        pause
-    )
+    echo.
+    echo Server beendet. Exitcode: %ERRORLEVEL%
+    pause
     goto :eof
 )
 
 :: Priorität 2: System-Python
-python --version >nul 2>&1
+python --version 2>&1
 if %ERRORLEVEL% EQU 0 (
-    echo Starte Server (System-Python)...
+    echo.
+    echo Python: System
+    echo.
     python "%DIR%server.py"
-    if %ERRORLEVEL% NEQ 0 (
-        echo.
-        echo Server beendet mit Fehlercode %ERRORLEVEL%
-        pause
-    )
+    echo.
+    echo Server beendet. Exitcode: %ERRORLEVEL%
+    pause
     goto :eof
 )
 
-:: Priorität 3: Kein Python gefunden – anbieten herunterzuladen
+:: Priorität 3: Kein Python gefunden
 echo Python nicht gefunden.
 echo.
 echo Das Tool benoetigt Python 3. Optionen:
@@ -58,19 +58,15 @@ if "%CHOICE%"=="1" (
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DIR%setup\get-python.ps1"
     if %ERRORLEVEL% NEQ 0 (
         echo.
-        echo FEHLER beim Herunterladen. Bitte Python manuell installieren.
-        echo https://www.python.org
-        echo.
+        echo FEHLER beim Herunterladen.
         pause
         exit /b 1
     )
     echo Starte Server...
     "%PYTHON_LOCAL%" "%DIR%server.py"
-    if %ERRORLEVEL% NEQ 0 (
-        echo.
-        echo Server beendet mit Fehlercode %ERRORLEVEL%
-        pause
-    )
+    echo.
+    echo Server beendet. Exitcode: %ERRORLEVEL%
+    pause
 ) else (
     echo.
     echo Bitte Python 3 installieren und start.bat erneut ausfuehren.

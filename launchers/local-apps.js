@@ -9,7 +9,7 @@
  */
 
 const LOCAL_APPS = [
-  // Eigene Apps hier eintragen, z.B.:
-  // { key: 'cursor',   name: 'Cursor',   icon: '✏️' },
-  // { key: 'obsidian', name: 'Obsidian', icon: '📝' },
+  { key: 'claude-desktop', name: 'Claude Desktop', icon: '🤖' },
+  { key: 'perplexity',     name: 'Perplexity',     icon: '🔍' },
+  { key: 'comet',          name: 'Comet Browser',  icon: '🌐' }
 ];

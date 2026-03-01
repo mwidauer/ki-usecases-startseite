@@ -216,6 +216,7 @@ function addToolRow(name = '', url = '', local = false, idx = null) {
   nameInput.placeholder = 'Name (z. B. Perplexity Desktop)';
   nameInput.value = name;
   nameInput.style.flex = '1';
+  nameInput.dataset.field = 'name';
 
   // URL-Feld (für Web-Tools)
   const urlInput = document.createElement('input');
@@ -223,6 +224,7 @@ function addToolRow(name = '', url = '', local = false, idx = null) {
   urlInput.placeholder = 'URL (https://...)';
   urlInput.value = local ? '' : url;
   urlInput.style.cssText = `flex:2;display:${local ? 'none' : 'block'}`;
+  urlInput.dataset.field = 'url';
 
   // App-Dropdown (für lokale Apps) – befüllt aus LOCAL_APPS (local-apps.js)
   const appSelect = document.createElement('select');
@@ -298,9 +300,9 @@ function collectTools() {
   const rows = document.querySelectorAll('.tool-row');
   const tools = [];
   rows.forEach(row => {
-    const nameInput = row.querySelector('input[type="text"], input:not([type="checkbox"]):not([type="button"])');
+    const nameInput = row.querySelector('input[data-field="name"]');
     const checkbox  = row.querySelector('input[type="checkbox"]');
-    const urlInput  = row.querySelector('input.form-input:not([type="checkbox"])');
+    const urlInput  = row.querySelector('input[data-field="url"]');
     const appSelect = row.querySelector('select');
 
     const isLocal = checkbox?.checked || false;

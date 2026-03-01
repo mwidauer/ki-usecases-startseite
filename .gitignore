@@ -6,9 +6,6 @@
 .env.local
 .env.*.local
 
-# Generierte Icons (werden per Skript neu erstellt)
-icons/
-
 # Python
 __pycache__/
 *.py[cod]

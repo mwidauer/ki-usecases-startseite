@@ -1,6 +1,9 @@
 # Claude Code interne Dateien
 .claude/
 
+# Persönliche Konfiguration (im personal-Branch committen, nicht in main)
+user-config.json
+
 # Secrets & Umgebungsvariablen
 .env
 .env.local

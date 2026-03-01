@@ -29,7 +29,8 @@ Die Konfiguration wird vollständig im Browser (`localStorage`) gespeichert und 
 | Bereich | Technologie |
 |---------|-------------|
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
-| Datenspeicher | `localStorage` im Browser |
+| Datenspeicher | `user-config.json` (via lokalem Python-Server) |
+| Server | Python 3 Standardbibliothek (`http.server`), keine externen Pakete |
 | Icons | PNG (DALL·E 3), generiert via `generate_icons.py` |
 | Lokale Apps | Windows-Protokoll-Handler (`localapp://`) + PowerShell-Launcher |
 
@@ -43,9 +44,15 @@ Die Konfiguration wird vollständig im Browser (`localStorage`) gespeichert und 
 git clone https://github.com/mwidauer/ki-usecases-startseite.git
 ```
 
-### 2. Startseite öffnen
+### 2. Server starten
 
-`index.html` direkt im Browser öffnen (Doppelklick oder Drag & Drop in die Adressleiste).
+→ **Doppelklick auf `start.bat`**
+
+Der Server startet auf `http://localhost:8080` und öffnet den Browser automatisch.
+Python 3 muss installiert sein (keine weiteren Pakete nötig).
+
+> Die Konfiguration wird als `user-config.json` im Projektordner gespeichert.
+> Beim ersten Start wird `data.json` als Vorlage verwendet.
 
 ### 3. Protokoll-Handler installieren *(einmalig, nur Windows)*
 
@@ -59,7 +66,7 @@ Das Fenster zeigt den Fortschritt und bleibt offen. Nach erfolgreichem Abschluss
 
 ### 4. Icons generieren *(optional)*
 
-Die Icons sind im Repository enthalten. Wer eigene Icons generieren möchte:
+Die Icons sind bereits im Repository enthalten. Wer eigene Icons generieren möchte:
 
 ```bash
 # .env-Datei mit OpenAI-API-Key anlegen:
@@ -77,7 +84,7 @@ Icons werden unter `icons/` gespeichert und überschreiben die vorhandenen Datei
 
 ### Startseite
 
-1. Browser-Favorit auf `index.html` setzen
+1. `start.bat` ausführen → Browser öffnet automatisch
 2. **Kachel anklicken** → Modal mit verfügbaren Tools öffnet sich
 3. **Web-Tool** anklicken → öffnet in neuem Tab
 4. **Lokale App** → „Starten ↗" anklicken → Desktop-App startet
@@ -249,7 +256,10 @@ with bright highlights. No text.
 ├── app.js                        # Startseiten-Logik
 ├── settings.js                   # Einstellungs-Logik
 ├── style.css                     # Stylesheet (Dark Mode)
-├── data.json                     # Standard-Konfiguration
+├── server.py                     # Lokaler HTTP-Server (Konfiguration lesen/schreiben)
+├── start.bat                     # Server starten (Doppelklick)
+├── data.json                     # Standard-Konfiguration (Vorlage)
+├── user-config.json              # Persönliche Konfiguration (nicht eingecheckt)
 ├── favicon.svg                   # Browser-Tab-Icon
 ├── generate_icons.py             # Icon-Generator (DALL·E 3)
 ├── .env                          # OpenAI API Key (nicht eingecheckt)
@@ -269,7 +279,7 @@ with bright highlights. No text.
 
 ## Hinweise
 
-- `.env` ist in `.gitignore` eingetragen und wird nicht eingecheckt
-- Die Konfiguration liegt im `localStorage` des Browsers; `data.json` dient nur als Initialzustand beim ersten Aufruf
+- `.env` und `user-config.json` sind in `.gitignore` und werden nicht eingecheckt
+- `user-config.json` enthält die persönliche Konfiguration; `data.json` ist die Vorlage beim ersten Start
 - Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt
-- Bei einem neuen Rechner: `install.bat` erneut ausführen
+- Bei einem neuen Rechner: `install.bat` und `start.bat` einmalig ausführen

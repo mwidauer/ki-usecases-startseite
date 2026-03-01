@@ -1,13 +1,12 @@
 /**
  * settings.js – Wartungsoberfläche für KI-Usecases
- * Liest/schreibt in localStorage, Export/Import als JSON.
+ * Liest/schreibt Konfiguration via /api/config (lokaler Python-Server).
  */
 
-const STORAGE_KEY = 'ki_usecases_config';
 let config = { usecases: [] };
-let editingId = null; // null = neuer Eintrag
+let editingId = null;
 
-// Gleiche Standarddaten wie in app.js (kein fetch bei file://)
+// Standarddaten (nur für Reset verwendet)
 const DEFAULT_DATA = {
   "usecases": [
     { "id": 1, "name": "Dokumenten-Recherche & Lernen", "icon": "icons/icon_01_dokumente.png", "description": "Analyse von Branchenreports und PDFs, Mustererkennung in Call-Transkripten, Zusammenfassen von Podcasts/Videos zu Audio-Overviews, quellenbasiertes Arbeiten ohne Halluzinationen", "tools": [{ "name": "NotebookLM", "url": "https://notebooklm.google.com" }] },
@@ -23,28 +22,42 @@ const DEFAULT_DATA = {
   ]
 };
 
-// ── Daten laden ──────────────────────────────────────────────
-function loadConfig() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      config = JSON.parse(stored);
-      return;
-    } catch { /* fall through */ }
+// ── API: Konfiguration laden ──────────────────────────────────
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    config = await res.json();
+  } catch {
+    showToast('⚠️ Server nicht erreichbar – bitte start.bat ausführen.', true);
   }
-  config = JSON.parse(JSON.stringify(DEFAULT_DATA)); // deep copy
-  saveConfig();
 }
 
-function saveConfig() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+// ── API: Konfiguration speichern ──────────────────────────────
+async function saveConfig() {
+  try {
+    const res = await fetch('/api/config', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(config),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  } catch {
+    showToast('⚠️ Speichern fehlgeschlagen – Server erreichbar?', true);
+    throw; // Damit Aufrufer den Fehler mitbekommen
+  }
 }
 
-function showToast(msg) {
+// ── Toast ─────────────────────────────────────────────────────
+function showToast(msg, isError = false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
+  el.style.background = isError ? 'var(--danger, #e53e3e)' : '';
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.style.background = '';
+  }, isError ? 4000 : 2500);
 }
 
 // ── Render Liste ─────────────────────────────────────────────
@@ -56,7 +69,6 @@ function renderList() {
     const item = document.createElement('div');
     item.className = 'usecase-item';
 
-    // Icon
     const iconWrap = document.createElement('div');
     if (uc.icon) {
       const img = document.createElement('img');
@@ -70,7 +82,6 @@ function renderList() {
     }
     item.appendChild(iconWrap);
 
-    // Content
     const content = document.createElement('div');
     content.className = 'usecase-item__content';
 
@@ -92,7 +103,6 @@ function renderList() {
     }
     item.appendChild(content);
 
-    // Actions
     const actions = document.createElement('div');
     actions.className = 'usecase-item__actions';
 
@@ -142,22 +152,22 @@ function makeIconBtn(symbol, label, onClick) {
 }
 
 // ── Reihenfolge ändern ───────────────────────────────────────
-function moveUsecase(idx, direction) {
+async function moveUsecase(idx, direction) {
   const arr = config.usecases;
   const swapIdx = idx + direction;
   [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
-  saveConfig();
   renderList();
+  await saveConfig();
 }
 
 // ── Löschen ──────────────────────────────────────────────────
-function deleteUsecase(id) {
+async function deleteUsecase(id) {
   const uc = config.usecases.find(u => u.id === id);
   if (!uc) return;
   if (!confirm(`"${uc.name}" wirklich löschen?`)) return;
   config.usecases = config.usecases.filter(u => u.id !== id);
-  saveConfig();
   renderList();
+  await saveConfig();
   showToast('Anwendungsfall gelöscht.');
 }
 
@@ -165,22 +175,22 @@ function deleteUsecase(id) {
 function openDrawer(id = null) {
   editingId = id;
   const drawer = document.getElementById('drawerOverlay');
-  const title = document.getElementById('drawerTitle');
+  const title  = document.getElementById('drawerTitle');
 
   if (id !== null) {
     title.textContent = 'Anwendungsfall bearbeiten';
     const uc = config.usecases.find(u => u.id === id);
-    document.getElementById('editId').value = uc.id;
-    document.getElementById('editName').value = uc.name;
+    document.getElementById('editId').value          = uc.id;
+    document.getElementById('editName').value        = uc.name;
     document.getElementById('editDescription').value = uc.description || '';
-    document.getElementById('editIcon').value = uc.icon || '';
+    document.getElementById('editIcon').value        = uc.icon || '';
     renderToolsEditor(uc.tools || []);
   } else {
     title.textContent = 'Anwendungsfall hinzufügen';
-    document.getElementById('editId').value = '';
-    document.getElementById('editName').value = '';
+    document.getElementById('editId').value          = '';
+    document.getElementById('editName').value        = '';
     document.getElementById('editDescription').value = '';
-    document.getElementById('editIcon').value = '';
+    document.getElementById('editIcon').value        = '';
     renderToolsEditor([]);
   }
 
@@ -247,7 +257,6 @@ function addToolRow(name = '', url = '', local = false, idx = null) {
   });
   if (!url || !local) placeholderOpt.selected = true;
 
-  // Wenn App gewählt → Name automatisch befüllen (falls Feld leer)
   appSelect.addEventListener('change', () => {
     const chosen = apps.find(a => `localapp://${a.key}` === appSelect.value);
     if (chosen && !nameInput.value.trim()) nameInput.value = chosen.name;
@@ -281,8 +290,8 @@ function addToolRow(name = '', url = '', local = false, idx = null) {
 
   checkbox.addEventListener('change', () => {
     const isLocal = checkbox.checked;
-    urlInput.style.display   = isLocal ? 'none'  : 'block';
-    appSelect.style.display  = isLocal ? 'block' : 'none';
+    urlInput.style.display  = isLocal ? 'none'  : 'block';
+    appSelect.style.display = isLocal ? 'block' : 'none';
     hint.textContent = isLocal
       ? '💻 Lokale Desktop-App (aus apps.json)'
       : '💻 Als lokale Desktop-App eintragen';
@@ -297,7 +306,7 @@ function addToolRow(name = '', url = '', local = false, idx = null) {
 }
 
 function collectTools() {
-  const rows = document.querySelectorAll('.tool-row');
+  const rows  = document.querySelectorAll('.tool-row');
   const tools = [];
   rows.forEach(row => {
     const nameInput = row.querySelector('input[data-field="name"]');
@@ -307,7 +316,7 @@ function collectTools() {
 
     const isLocal = checkbox?.checked || false;
     const name    = nameInput?.value.trim();
-    let   url     = isLocal ? (appSelect?.value || '') : (urlInput?.value.trim() || '');
+    const url     = isLocal ? (appSelect?.value || '') : (urlInput?.value.trim() || '');
 
     if (!name) return;
     const tool = { name, url };
@@ -318,22 +327,22 @@ function collectTools() {
 }
 
 // ── Formular speichern ───────────────────────────────────────
-document.getElementById('editForm').addEventListener('submit', e => {
+document.getElementById('editForm').addEventListener('submit', async e => {
   e.preventDefault();
 
   const name = document.getElementById('editName').value.trim();
   if (!name) { alert('Bitte einen Namen eingeben.'); return; }
 
   const description = document.getElementById('editDescription').value.trim();
-  const icon = document.getElementById('editIcon').value.trim();
-  const tools = collectTools();
+  const icon        = document.getElementById('editIcon').value.trim();
+  const tools       = collectTools();
 
   if (editingId !== null) {
     const uc = config.usecases.find(u => u.id === editingId);
-    uc.name = name;
+    uc.name        = name;
     uc.description = description;
-    uc.icon = icon || null;
-    uc.tools = tools;
+    uc.icon        = icon || null;
+    uc.tools       = tools;
   } else {
     const newId = config.usecases.length > 0
       ? Math.max(...config.usecases.map(u => u.id)) + 1
@@ -341,34 +350,38 @@ document.getElementById('editForm').addEventListener('submit', e => {
     config.usecases.push({ id: newId, name, description, icon: icon || null, tools });
   }
 
-  saveConfig();
-  renderList();
-  closeDrawer();
-  showToast('Gespeichert.');
+  try {
+    await saveConfig();
+    renderList();
+    closeDrawer();
+    showToast('Gespeichert.');
+  } catch {
+    // Fehlermeldung kommt bereits aus saveConfig()
+  }
 });
 
 // ── Export ───────────────────────────────────────────────────
 document.getElementById('btnExport').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
   a.download = 'ki_usecases_backup.json';
   a.click();
   URL.revokeObjectURL(url);
 });
 
 // ── Import ───────────────────────────────────────────────────
-document.getElementById('importFile').addEventListener('change', e => {
+document.getElementById('importFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
+  reader.onload = async ev => {
     try {
       const imported = JSON.parse(ev.target.result);
       if (!imported.usecases) throw new Error('Ungültiges Format');
       config = imported;
-      saveConfig();
+      await saveConfig();
       renderList();
       showToast('Import erfolgreich.');
     } catch {
@@ -380,17 +393,21 @@ document.getElementById('importFile').addEventListener('change', e => {
 });
 
 // ── Reset ────────────────────────────────────────────────────
-document.getElementById('btnReset').addEventListener('click', () => {
+document.getElementById('btnReset').addEventListener('click', async () => {
   if (!confirm('Alle Änderungen verwerfen und auf Standard-Konfiguration zurücksetzen?')) return;
-  config = JSON.parse(JSON.stringify(DEFAULT_DATA)); // deep copy
-  saveConfig();
-  renderList();
-  showToast('Auf Standard zurückgesetzt.');
+  config = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  try {
+    await saveConfig();
+    renderList();
+    showToast('Auf Standard zurückgesetzt.');
+  } catch {
+    // Fehlermeldung kommt bereits aus saveConfig()
+  }
 });
 
 // ── Drawer Buttons ────────────────────────────────────────────
-document.getElementById('btnAdd').addEventListener('click', () => openDrawer(null));
-document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+document.getElementById('btnAdd').addEventListener('click',         () => openDrawer(null));
+document.getElementById('drawerClose').addEventListener('click',    closeDrawer);
 document.getElementById('drawerCancelBtn').addEventListener('click', closeDrawer);
 document.getElementById('drawerOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('drawerOverlay')) closeDrawer();
@@ -401,5 +418,9 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Start ────────────────────────────────────────────────────
-loadConfig();
-renderList();
+async function init() {
+  await loadConfig();
+  renderList();
+}
+
+init();

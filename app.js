@@ -61,7 +61,7 @@ const DEFAULT_DATA = {
       "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen",
       "tools": [
         { "name": "Cursor", "url": "https://www.cursor.com" },
-        { "name": "Claude Code", "url": "claudecode://launch", "local": true }
+        { "name": "Claude Code", "url": "localapp://claude-code", "local": true }
       ]
     },
     {

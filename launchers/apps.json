@@ -1,0 +1,17 @@
+{
+  "_readme": "Jede lokale App hier eintragen. Typ 'exe' fuer Desktop-Apps, 'terminal' fuer CLI-Tools. Umgebungsvariablen wie %LOCALAPPDATA% und %APPDATA% werden unterstuetzt. URL auf der Startseite: localapp://schluessel",
+
+  "claude-code": {
+    "type": "terminal",
+    "command": "claude",
+    "title": "Claude Code"
+  },
+
+  "_beispiele_auskommentiert": {
+    "perplexity":      { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe" },
+    "claude-desktop":  { "type": "exe", "path": "%LOCALAPPDATA%\\AnthropicClaude\\claude.exe" },
+    "comet":           { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\Comet\\Comet.exe" },
+    "cursor":          { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\cursor\\Cursor.exe" },
+    "obsidian":        { "type": "exe", "path": "%LOCALAPPDATA%\\Programs\\obsidian\\Obsidian.exe" }
+  }
+}

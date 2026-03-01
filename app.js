@@ -66,6 +66,10 @@ function showServerError() {
 
 // ── Daten laden ───────────────────────────────────────────────
 async function loadData() {
+  if (window.location.protocol === 'file:') {
+    showServerError();
+    return null;
+  }
   try {
     const res = await fetch('/api/config');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

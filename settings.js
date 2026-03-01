@@ -22,14 +22,39 @@ const DEFAULT_DATA = {
   ]
 };
 
+// ── Server-Fehler anzeigen (permanent, nicht überschreibbar) ──
+function showLoadError(msg) {
+  const list = document.getElementById('usecaseList');
+  list.innerHTML = `
+    <div style="padding:2rem;background:var(--card);border:1px solid var(--border);
+                border-radius:12px;text-align:center;color:var(--text-muted);max-width:520px;margin:2rem auto">
+      <div style="font-size:2rem;margin-bottom:0.75rem">⚠️</div>
+      <div style="font-size:1rem;font-weight:600;color:var(--text);margin-bottom:0.5rem">
+        Server nicht erreichbar
+      </div>
+      <div style="font-size:0.85rem;line-height:1.6">${msg}</div>
+    </div>`;
+  list.dataset.error = '1'; // Marker: renderList() soll nicht überschreiben
+}
+
 // ── API: Konfiguration laden ──────────────────────────────────
 async function loadConfig() {
+  // Seite als file://-URL geöffnet → fetch funktioniert nicht
+  if (window.location.protocol === 'file:') {
+    showLoadError(`Diese Seite muss über den lokalen Server geöffnet werden:<br><br>
+      <code style="background:var(--bg);padding:0.2rem 0.5rem;border-radius:4px;font-size:0.9rem">
+        http://localhost:8080/settings.html
+      </code><br><br>
+      Bitte <strong>start.bat</strong> ausführen und die Seite über den Browser-Favoriten öffnen.`);
+    return;
+  }
   try {
     const res = await fetch('/api/config');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     config = await res.json();
-  } catch {
-    showToast('⚠️ Server nicht erreichbar – bitte start.bat ausführen.', true);
+  } catch (err) {
+    showLoadError(`Fehler: ${err.message}<br><br>
+      Bitte <strong>start.bat</strong> ausführen und Seite neu laden (<kbd>F5</kbd>).`);
   }
 }
 
@@ -42,9 +67,9 @@ async function saveConfig() {
       body:    JSON.stringify(config),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  } catch {
+  } catch (err) {
     showToast('⚠️ Speichern fehlgeschlagen – Server erreichbar?', true);
-    throw; // Damit Aufrufer den Fehler mitbekommen
+    throw err; // Damit Aufrufer den Fehler mitbekommen
   }
 }
 
@@ -420,7 +445,9 @@ document.addEventListener('keydown', e => {
 // ── Start ────────────────────────────────────────────────────
 async function init() {
   await loadConfig();
-  renderList();
+  if (!document.getElementById('usecaseList').dataset.error) {
+    renderList();
+  }
 }
 
 init();

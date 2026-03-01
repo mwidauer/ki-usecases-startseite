@@ -24,7 +24,10 @@ if not exist "%DIR%server.py" (
 if exist "%PYTHON_LOCAL%" (
     echo Python: eingebettet [%PYTHON_LOCAL%]
     echo.
-    "%PYTHON_LOCAL%" "%DIR%server.py"
+    echo Server laeuft auf http://localhost:8080
+    echo Browser-Favorit oeffnen oder URL manuell eingeben.
+    echo.
+    "%PYTHON_LOCAL%" "%DIR%server.py" --no-browser
     echo.
     echo Server beendet. Exitcode: %ERRORLEVEL%
     pause
@@ -37,7 +40,10 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo Python: System
     echo.
-    python "%DIR%server.py"
+    echo Server laeuft auf http://localhost:8080
+    echo Browser-Favorit oeffnen oder URL manuell eingeben.
+    echo.
+    python "%DIR%server.py" --no-browser
     echo.
     echo Server beendet. Exitcode: %ERRORLEVEL%
     pause
@@ -62,8 +68,11 @@ if "%CHOICE%"=="1" (
         pause
         exit /b 1
     )
-    echo Starte Server...
-    "%PYTHON_LOCAL%" "%DIR%server.py"
+    echo.
+    echo Server laeuft auf http://localhost:8080
+    echo Browser-Favorit oeffnen oder URL manuell eingeben.
+    echo.
+    "%PYTHON_LOCAL%" "%DIR%server.py" --no-browser
     echo.
     echo Server beendet. Exitcode: %ERRORLEVEL%
     pause

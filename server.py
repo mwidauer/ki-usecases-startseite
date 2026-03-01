@@ -11,6 +11,7 @@ Endpunkte:
 
 import json
 import os
+import sys
 import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -84,6 +85,8 @@ if __name__ == '__main__':
     httpd = HTTPServer(('localhost', PORT), Handler)
     url   = f'http://localhost:{PORT}'
 
+    open_browser = '--no-browser' not in sys.argv
+
     print()
     print('=' * 50)
     print('  KI-Usecases Startseite')
@@ -92,7 +95,8 @@ if __name__ == '__main__':
     print('=' * 50)
     print()
 
-    webbrowser.open(url)
+    if open_browser:
+        webbrowser.open(url)
 
     try:
         httpd.serve_forever()

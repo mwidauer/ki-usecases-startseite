@@ -325,11 +325,23 @@ a {
   font-size: 0.8rem;
 }
 
-/* Lokale Desktop-App (kein Web-Link) */
+/* Lokale Desktop-App (button-Reset + Stil) */
+button.modal__tool-link--local {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+
 .modal__tool-link--local {
   cursor: default;
   border-color: rgba(139, 92, 246, 0.25);
   background: rgba(139, 92, 246, 0.05);
+}
+
+button.modal__tool-link--local[title] {
+  cursor: pointer;
 }
 
 .modal__tool-link--local:hover {

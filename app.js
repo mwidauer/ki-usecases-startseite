@@ -212,17 +212,24 @@ function openModal(uc) {
     toolList.appendChild(empty);
   } else {
     uc.tools.forEach(tool => {
-      // Lokale App → mit URL klickbar, ohne URL nur Badge
+      // Lokale App → mit URL klickbar (per iframe, ohne Seitennavigation), ohne URL nur Badge
       if (tool.local) {
-        const el = tool.url
-          ? document.createElement('a')
-          : document.createElement('div');
+        const el = document.createElement(tool.url ? 'button' : 'div');
 
         el.className = 'modal__tool-link modal__tool-link--local';
 
         if (tool.url) {
-          el.href   = tool.url;
-          el.title  = 'Lokale App starten';
+          el.type  = 'button';
+          el.title = 'Lokale App starten';
+          const protocolUrl = tool.url;
+          el.addEventListener('click', () => {
+            // Protokoll via verstecktem iframe aufrufen → Seite bleibt erhalten
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = protocolUrl;
+            document.body.appendChild(iframe);
+            setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
+          });
         }
 
         const icon = document.createElement('span');

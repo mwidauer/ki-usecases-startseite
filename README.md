@@ -48,7 +48,7 @@ git clone https://github.com/mwidauer/ki-usecases-startseite.git
 
 → **Doppelklick auf `start.bat`**
 
-Der Server startet auf `http://localhost:8080` und öffnet den Browser automatisch.
+Der Server startet auf `http://localhost:8080`. Danach Browser-Favorit öffnen oder URL manuell eingeben.
 
 **Python wird automatisch bereitgestellt** – keine manuelle Installation nötig:
 - Falls Python bereits installiert ist, wird es direkt verwendet
@@ -57,7 +57,18 @@ Der Server startet auf `http://localhost:8080` und öffnet den Browser automatis
 > Die Konfiguration wird als `user-config.json` im Projektordner gespeichert.
 > Beim ersten Start wird `data.json` als Vorlage verwendet.
 
-### 3. Protokoll-Handler installieren *(einmalig, nur Windows)*
+### 3. Autostart einrichten *(empfohlen)*
+
+Damit der Server bei jedem Windows-Login automatisch und unsichtbar im Hintergrund startet:
+
+→ **Doppelklick auf `setup/install-autostart.bat`**
+
+Ab dem nächsten Login läuft der Server automatisch – einfach den Browser-Favoriten `http://localhost:8080` anklicken.
+
+> Der Autostart-Eintrag wird unter `shell:startup` angelegt (kein Admin-Recht erforderlich).
+> Zum Entfernen: `Win+R` → `shell:startup` → `KI-Usecases-Server.vbs` löschen.
+
+### 4. Protokoll-Handler installieren *(einmalig, nur Windows)*
 
 Damit lokale Desktop-Apps per Klick gestartet werden können, muss einmalig ein Windows-Protokoll-Handler registriert werden:
 

@@ -16,7 +16,7 @@ Die Konfiguration wird vollständig im Browser (`localStorage`) gespeichert und 
 
 - **Icon-Kacheln** mit Hover-Effekt und Modal-Tool-Auswahl
 - **Web-Tools** öffnen direkt im neuen Tab (NotebookLM, Claude, Perplexity Web, …)
-- **Lokale Desktop-Apps** starten per Klick (Comet Browser, Perplexity Desktop, Claude Desktop, …)
+- **Lokale Desktop-Apps** starten per Klick (beliebige Windows-Apps konfigurierbar)
 - **Wartungsoberfläche** (`settings.html`): Anwendungsfälle und Tools hinzufügen, bearbeiten, sortieren, löschen
 - **Export / Import** der Konfiguration als JSON
 - **Kein Server** erforderlich – läuft vollständig als `file://`-URL
@@ -59,7 +59,7 @@ Das Fenster zeigt den Fortschritt und bleibt offen. Nach erfolgreichem Abschluss
 
 ### 4. Icons generieren *(optional)*
 
-Eigene Icons mit DALL·E 3 generieren:
+Die Icons sind im Repository enthalten. Wer eigene Icons generieren möchte:
 
 ```bash
 # .env-Datei mit OpenAI-API-Key anlegen:
@@ -69,7 +69,7 @@ pip install openai python-dotenv
 python generate_icons.py
 ```
 
-Icons werden unter `icons/` gespeichert.
+Icons werden unter `icons/` gespeichert und überschreiben die vorhandenen Dateien.
 
 ---
 
@@ -106,25 +106,28 @@ Das System unterstützt zwei App-Typen:
 | `exe` | Normale Windows-Desktop-Anwendung (`.exe`-Datei) |
 | `appid` | Windows Store / MSIX-App (App-ID aus der Registry) |
 
-### Schritt 1 – Exe-Pfad in `launchers/apps.json` eintragen
+### Schritt 1 – Eintrag in `launchers/apps.json`
 
 ```json
 {
   "meine-app": {
     "type": "exe",
     "path": "%LOCALAPPDATA%\\Programs\\MeineApp\\MeineApp.exe"
+  },
+  "meine-store-app": {
+    "type": "appid",
+    "appid": "PublisherName.AppName_hash!App"
   }
 }
 ```
 
 Umgebungsvariablen wie `%LOCALAPPDATA%` und `%APPDATA%` werden unterstützt.
 
-### Schritt 2 – Anzeigename in `launchers/local-apps.js` eintragen
+### Schritt 2 – Anzeigename in `launchers/local-apps.js`
 
 ```js
 const LOCAL_APPS = [
   { key: 'meine-app', name: 'Meine App', icon: '🚀' },
-  // ... bestehende Einträge
 ];
 ```
 
@@ -139,13 +142,101 @@ Der `key` muss in beiden Dateien identisch sein.
 
 > **Kein Neustart des Protokoll-Handlers erforderlich.** Neue Apps können jederzeit zu `apps.json` und `local-apps.js` hinzugefügt werden.
 
-### Aktuell konfigurierte lokale Apps
+---
 
-| Key | App | Typ |
-|-----|-----|-----|
-| `claude-desktop` | Claude Desktop | MSIX (Store) |
-| `perplexity` | Perplexity | exe |
-| `comet` | Comet Browser | exe |
+## Icons
+
+### Enthaltene Icons
+
+Das Repository enthält zehn fertige Icons im Stil „Isometric Dark Mode" (DALL·E 3, 1024×1024 px).
+
+### Eigene Icons mit DALL·E 3 generieren
+
+Der einheitliche Stil für alle Icons:
+
+> Isometric dark mode illustration. Deep navy background. Small 3D human figures with oversized tech objects. Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with bright highlights. No text. Consistent style across all icons.
+
+### DALL·E 3 Prompts – alle 10 Anwendungsfälle
+
+**icon_01 – Dokumenten-Recherche & Lernen**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+reading oversized glowing documents and PDFs with magnifying glass. Neon accents:
+cyan, purple, mint green with soft glow. Dark slate objects with bright highlights.
+No text.
+```
+
+**icon_02 – Web-Recherche & Daten-Scraping**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+navigating oversized web browser windows with data flowing into a structured table.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_03 – Texterstellung & Automatisierung**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+operating oversized keyboard with automated workflow gears and text streams.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_04 – Prozess-Automatisierung**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+connecting oversized automation nodes in a flowing pipeline with robotic arms.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_05 – Prototyping & MVPs**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+assembling oversized app wireframe blocks and UI components like building bricks.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_06 – App-Entwicklung & Programmierung**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+beside oversized monitor with code lines and AI robot co-pilot writing code.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_07 – Lokale Corporate LLMs**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+standing inside a secure server vault with a brain and shield icon on local server.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_08 – Voice AI & KI-Sprachagenten**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+speaking into an oversized microphone with AI waveforms and phone agent headset.
+Neon accents: cyan, purple, mint green with soft glow. Dark slate objects with
+bright highlights. No text.
+```
+
+**icon_09 – Videogenerierung & Werbefilme**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+directing an oversized cinematic camera with AI-generated film frames floating
+around. Neon accents: cyan, purple, mint green with soft glow. Dark slate objects
+with bright highlights. No text.
+```
+
+**icon_10 – Präsentationserstellung**
+```
+Isometric dark mode illustration. Deep navy background. Small 3D human figure
+presenting oversized glowing slides with charts auto-assembling from notes and
+data. Neon accents: cyan, purple, mint green with soft glow. Dark slate objects
+with bright highlights. No text.
+```
 
 ---
 
@@ -171,14 +262,14 @@ Der `key` muss in beiden Dateien identisch sein.
 │   └── install.bat               # Starter für den Installer (empfohlen)
 └── icons/
     ├── icon_01_dokumente.png
-    └── ...                       # (nicht eingecheckt, lokal generiert)
+    └── ...
 ```
 
 ---
 
 ## Hinweise
 
-- `.env` und `icons/` sind in `.gitignore` eingetragen und werden nicht eingecheckt
+- `.env` ist in `.gitignore` eingetragen und wird nicht eingecheckt
 - Die Konfiguration liegt im `localStorage` des Browsers; `data.json` dient nur als Initialzustand beim ersten Aufruf
 - Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt
 - Bei einem neuen Rechner: `install.bat` erneut ausführen

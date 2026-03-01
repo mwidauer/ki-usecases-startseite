@@ -1,6 +1,6 @@
 # KI-Usecases Startseite
 
-Eine lokale Browser-Startseite, die KI-Anwendungsfälle visuell aufbereitet und den schnellen Aufruf passender Tools ermöglicht – direkt als `file://`-URL im Browser, ohne Server oder Build-Tools.
+Eine lokale Browser-Startseite, die KI-Anwendungsfälle visuell aufbereitet und den schnellen Aufruf passender Tools ermöglicht. Die Seite läuft über einen lokalen Python-Server und ist im Browser unter `http://localhost:8080` erreichbar.
 
 ---
 
@@ -8,7 +8,7 @@ Eine lokale Browser-Startseite, die KI-Anwendungsfälle visuell aufbereitet und 
 
 Die Startseite dient als persönliches Launchpad für KI-Werkzeuge. Zehn vorkonfigurierte Anwendungsfälle (Recherche, Texterstellung, Automatisierung, Entwicklung u. a.) sind als klickbare Kacheln dargestellt. Ein Klick öffnet ein Auswahlmenü mit den zugehörigen Tools – entweder als direkter Browser-Link (Web-Apps) oder als Start einer lokal installierten Desktop-Anwendung.
 
-Die Konfiguration wird vollständig im Browser (`localStorage`) gespeichert und kann über eine integrierte Wartungsoberfläche angepasst werden.
+Die Konfiguration wird in einer lokalen Datei (`user-config.json`) gespeichert und kann über eine integrierte Wartungsoberfläche angepasst werden.
 
 ---
 
@@ -19,7 +19,8 @@ Die Konfiguration wird vollständig im Browser (`localStorage`) gespeichert und 
 - **Lokale Desktop-Apps** starten per Klick (beliebige Windows-Apps konfigurierbar)
 - **Wartungsoberfläche** (`settings.html`): Anwendungsfälle und Tools hinzufügen, bearbeiten, sortieren, löschen
 - **Export / Import** der Konfiguration als JSON
-- **Kein Server** erforderlich – läuft vollständig als `file://`-URL
+- **Autostart-fähig** – Server startet unsichtbar beim Windows-Login, kein Terminalfenster
+- **Kein Python installieren nötig** – wird bei Bedarf automatisch eingebettet bereitgestellt
 - **Dark-Mode-Design** mit Cyan/Purple/Mint-Akzenten
 
 ---
@@ -48,7 +49,7 @@ git clone https://github.com/mwidauer/ki-usecases-startseite.git
 
 → **Doppelklick auf `start.bat`**
 
-Der Server startet auf `http://localhost:8080`. Danach Browser-Favorit öffnen oder URL manuell eingeben.
+Der Server startet auf `http://localhost:8080`. Danach die URL als Browser-Favorit speichern.
 
 **Python wird automatisch bereitgestellt** – keine manuelle Installation nötig:
 - Falls Python bereits installiert ist, wird es direkt verwendet
@@ -63,12 +64,12 @@ Damit der Server bei jedem Windows-Login automatisch und unsichtbar im Hintergru
 
 → **Doppelklick auf `setup/install-autostart.bat`**
 
-Ab dem nächsten Login läuft der Server automatisch – einfach den Browser-Favoriten `http://localhost:8080` anklicken.
+Ab dem nächsten Login läuft der Server automatisch – einfach den Browser-Favoriten `http://localhost:8080` anklicken. Kein Terminalfenster, kein manueller Start nötig.
 
 > Der Autostart-Eintrag wird unter `shell:startup` angelegt (kein Admin-Recht erforderlich).
 > Zum Entfernen: `Win+R` → `shell:startup` → `KI-Usecases-Server.vbs` löschen.
 
-### 4. Protokoll-Handler installieren *(einmalig, nur Windows)*
+### 4. Protokoll-Handler installieren *(einmalig, nur für lokale Desktop-Apps)*
 
 Damit lokale Desktop-Apps per Klick gestartet werden können, muss einmalig ein Windows-Protokoll-Handler registriert werden:
 
@@ -77,8 +78,9 @@ Damit lokale Desktop-Apps per Klick gestartet werden können, muss einmalig ein 
 Das Fenster zeigt den Fortschritt und bleibt offen. Nach erfolgreichem Abschluss (`FERTIG!`) den Browser neu starten.
 
 > Der Handler registriert das Protokoll `localapp://` in der Windows-Registry (HKCU, kein Admin-Recht erforderlich).
+> Wer keine lokalen Desktop-Apps benötigt, kann diesen Schritt überspringen.
 
-### 4. Icons generieren *(optional)*
+### 5. Icons generieren *(optional)*
 
 Die Icons sind bereits im Repository enthalten. Wer eigene Icons generieren möchte:
 
@@ -98,14 +100,16 @@ Icons werden unter `icons/` gespeichert und überschreiben die vorhandenen Datei
 
 ### Startseite
 
-1. `start.bat` ausführen → Browser öffnet automatisch
+1. Browser-Favorit `http://localhost:8080` öffnen (Server muss laufen)
 2. **Kachel anklicken** → Modal mit verfügbaren Tools öffnet sich
 3. **Web-Tool** anklicken → öffnet in neuem Tab
 4. **Lokale App** → „Starten ↗" anklicken → Desktop-App startet
 
-### Einstellungen (`settings.html`)
+### Einstellungen
 
-Erreichbar über das **Zahnrad-Icon** oben rechts auf der Startseite.
+Erreichbar über das **Zahnrad-Icon** oben rechts auf der Startseite (`http://localhost:8080/settings.html`).
+
+> **Wichtig:** Die Einstellungsseite funktioniert nur über den lokalen Server (`http://localhost:8080/settings.html`), nicht als direkt geöffnete Datei.
 
 - **Anwendungsfall hinzufügen/bearbeiten:** Name, Beschreibung, Icon-Pfad, Tools
 - **Tool hinzufügen:** Name eingeben, dann entweder
@@ -162,6 +166,22 @@ Der `key` muss in beiden Dateien identisch sein.
 4. App aus dem Dropdown wählen → Speichern
 
 > **Kein Neustart des Protokoll-Handlers erforderlich.** Neue Apps können jederzeit zu `apps.json` und `local-apps.js` hinzugefügt werden.
+
+---
+
+## Port anpassen
+
+Der Server läuft standardmäßig auf Port **8080**. Falls dieser Port bereits belegt ist, kann er über eine optionale Datei `server.json` im Projektordner geändert werden:
+
+```json
+{ "port": 8081 }
+```
+
+Die Datei wird beim Start automatisch eingelesen. Danach den Browser-Favoriten entsprechend anpassen (`http://localhost:8081`).
+
+> `server.json` ist in `.gitignore` – die Einstellung bleibt lokal und wird nicht ins Repository eingecheckt.
+>
+> **Hinweis zur Firewall:** Der Server bindet ausschließlich an `localhost` (127.0.0.1) und ist nur vom eigenen Rechner erreichbar. Windows Firewall ist dabei nicht betroffen, unabhängig vom gewählten Port.
 
 ---
 
@@ -270,43 +290,32 @@ with bright highlights. No text.
 ├── app.js                        # Startseiten-Logik
 ├── settings.js                   # Einstellungs-Logik
 ├── style.css                     # Stylesheet (Dark Mode)
-├── server.py                     # Lokaler HTTP-Server (Konfiguration lesen/schreiben)
+├── server.py                     # Lokaler HTTP-Server (GET/POST /api/config)
 ├── start.bat                     # Server starten (Doppelklick, lädt Python falls nötig)
-├── data.json                     # Standard-Konfiguration (Vorlage)
+├── start-hidden.vbs              # Server unsichtbar starten (für Autostart)
+├── data.json                     # Standard-Konfiguration (Vorlage beim ersten Start)
 ├── user-config.json              # Persönliche Konfiguration (nicht eingecheckt)
-├── setup/
-│   └── get-python.ps1            # Lädt eingebettetes Python herunter (von start.bat aufgerufen)
-├── python/                       # Eingebettetes Python (nicht eingecheckt, auto-heruntergeladen)
+├── server.json                   # Optionaler Port (nicht eingecheckt, Standard: 8080)
 ├── favicon.svg                   # Browser-Tab-Icon
 ├── generate_icons.py             # Icon-Generator (DALL·E 3)
 ├── .env                          # OpenAI API Key (nicht eingecheckt)
+├── setup/
+│   ├── get-python.ps1            # Lädt eingebettetes Python herunter (von start.bat aufgerufen)
+│   └── install-autostart.bat    # Richtet Windows-Autostart ein (Doppelklick)
+├── python/                       # Eingebettetes Python (nicht eingecheckt, auto-heruntergeladen)
 ├── launchers/
 │   ├── local-apps.js             # App-Liste für das Browser-Dropdown
 │   ├── apps.json                 # Exe-Pfade für den PowerShell-Launcher
 │   ├── universal-launcher.ps1    # Startet Apps anhand von apps.json
 │   ├── localapp-launcher.bat     # Wrapper für den Registry-Handler
 │   ├── install-protocol-handler.ps1  # Registriert localapp:// (Windows)
-│   └── install.bat               # Starter für den Installer (empfohlen)
-└── icons/
-    ├── icon_01_dokumente.png
-    └── ...
+│   └── install.bat               # Starter für den Installer (Doppelklick)
+├── icons/
+│   ├── icon_01_dokumente.png
+│   └── ...
+└── Lessons Learned/
+    └── projekt-retrospektive.md  # Projekt-Retrospektive und Lessons Learned
 ```
-
----
-
-## Port anpassen
-
-Der Server läuft standardmäßig auf Port **8080**. Falls dieser Port bereits belegt ist, kann er über eine optionale Datei `server.json` im Projektordner geändert werden:
-
-```json
-{ "port": 8081 }
-```
-
-Die Datei wird beim Start automatisch eingelesen. Danach den Browser-Favoriten entsprechend anpassen (`http://localhost:8081`).
-
-> `server.json` ist in `.gitignore` – die Einstellung bleibt lokal und wird nicht ins Repository eingecheckt.
->
-> **Hinweis zur Firewall:** Der Server bindet ausschließlich an `localhost` (127.0.0.1) und ist nur vom eigenen Rechner erreichbar. Windows Firewall ist dabei nicht betroffen, unabhängig vom gewählten Port.
 
 ---
 
@@ -315,5 +324,5 @@ Die Datei wird beim Start automatisch eingelesen. Danach den Browser-Favoriten e
 - `.env`, `user-config.json`, `server.json` und `python/` sind in `.gitignore` und werden nicht eingecheckt
 - `user-config.json` enthält die persönliche Konfiguration; `data.json` ist die Vorlage beim ersten Start
 - `python/` wird automatisch durch `start.bat` heruntergeladen wenn kein System-Python gefunden wird
-- Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt
-- Bei einem neuen Rechner: `launchers/install.bat` und `start.bat` einmalig ausführen
+- Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt und ist nur für lokale Desktop-Apps erforderlich
+- Bei einem neuen Rechner: `setup/install-autostart.bat` und `launchers/install.bat` einmalig ausführen

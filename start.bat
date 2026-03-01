@@ -9,10 +9,25 @@ echo  KI-Usecases Startseite
 echo ==========================================
 echo.
 
+:: server.py vorhanden?
+if not exist "%DIR%server.py" (
+    echo FEHLER: server.py nicht gefunden.
+    echo Bitte sicherstellen, dass start.bat im Projektordner liegt.
+    echo Aktueller Ordner: %DIR%
+    echo.
+    pause
+    exit /b 1
+)
+
 :: Priorität 1: Eingebettetes Python (python\python.exe)
 if exist "%PYTHON_LOCAL%" (
-    echo Starte Server...
+    echo Starte Server (eingebettetes Python)...
     "%PYTHON_LOCAL%" "%DIR%server.py"
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo Server beendet mit Fehlercode %ERRORLEVEL%
+        pause
+    )
     goto :eof
 )
 
@@ -21,6 +36,11 @@ python --version >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     echo Starte Server (System-Python)...
     python "%DIR%server.py"
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo Server beendet mit Fehlercode %ERRORLEVEL%
+        pause
+    )
     goto :eof
 )
 
@@ -46,6 +66,11 @@ if "%CHOICE%"=="1" (
     )
     echo Starte Server...
     "%PYTHON_LOCAL%" "%DIR%server.py"
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo Server beendet mit Fehlercode %ERRORLEVEL%
+        pause
+    )
 ) else (
     echo.
     echo Bitte Python 3 installieren und start.bat erneut ausfuehren.

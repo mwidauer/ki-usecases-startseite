@@ -60,8 +60,7 @@ const DEFAULT_DATA = {
       "icon": "icons/icon_06_programmierung.png",
       "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen",
       "tools": [
-        { "name": "Cursor", "url": "https://www.cursor.com" },
-        { "name": "Claude Code", "url": "localapp://claude-code", "local": true }
+        { "name": "Cursor", "url": "https://www.cursor.com" }
       ]
     },
     {
@@ -212,29 +211,25 @@ function openModal(uc) {
     toolList.appendChild(empty);
   } else {
     uc.tools.forEach(tool => {
-      // Lokale App → mit URL klickbar (per iframe, ohne Seitennavigation), ohne URL nur Badge
+      // Lokale App → einfacher Anchor mit localapp://-Protokoll
       if (tool.local) {
-        const el = document.createElement(tool.url ? 'button' : 'div');
-
+        const el = document.createElement('a');
         el.className = 'modal__tool-link modal__tool-link--local';
 
         if (tool.url) {
-          el.type  = 'button';
+          el.href  = tool.url;   // z. B. localapp://perplexity
           el.title = 'Lokale App starten';
-          const protocolUrl = tool.url;
-          el.addEventListener('click', () => {
-            // Protokoll via verstecktem iframe aufrufen → Seite bleibt erhalten
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = protocolUrl;
-            document.body.appendChild(iframe);
-            setTimeout(() => { if (iframe.parentNode) iframe.parentNode.removeChild(iframe); }, 2000);
-          });
+          // Kein target="_blank": Windows-Protokoll-Handler übernimmt
         }
+
+        // Emoji-Icon aus LOCAL_APPS laden (falls verfügbar), sonst 💻
+        const apps = (typeof LOCAL_APPS !== 'undefined') ? LOCAL_APPS : [];
+        const key  = (tool.url || '').replace('localapp://', '');
+        const meta = apps.find(a => a.key === key);
 
         const icon = document.createElement('span');
         icon.className   = 'local-icon';
-        icon.textContent = '💻';
+        icon.textContent = (meta && meta.icon) ? meta.icon : '💻';
         el.appendChild(icon);
 
         const label = document.createElement('span');

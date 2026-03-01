@@ -1,16 +1,9 @@
 {
-  "_readme": "Jede lokale App hier eintragen. Typen: 'exe' (Desktop-App), 'terminal' (CLI-Tool), 'appid' (Windows-Store/MSIX-App). Umgebungsvariablen wie %LOCALAPPDATA% und %APPDATA% werden unterstuetzt. URL auf der Startseite: localapp://schluessel",
-
-  "claude-code": {
-    "type": "terminal",
-    "command": "claude",
-    "title": "Claude Code"
-  },
+  "_readme": "Exe-Pfade fuer lokale Desktop-Apps. Typ 'exe': direkter Start einer .exe-Datei. Typ 'appid': Windows Store/MSIX-App via AppUserModelId. Umgebungsvariablen wie %LOCALAPPDATA% werden expandiert. Neue App: hier UND in local-apps.js eintragen.",
 
   "claude-desktop": {
     "type": "appid",
-    "appid": "Claude_pzs8sxrjxfjjc!Claude",
-    "title": "Claude Desktop"
+    "appid": "Claude_pzs8sxrjxfjjc!Claude"
   },
 
   "perplexity": {

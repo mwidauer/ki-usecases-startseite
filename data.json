@@ -51,8 +51,7 @@
       "icon": "icons/icon_06_programmierung.png",
       "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten, ohne selbst Code schreiben zu müssen",
       "tools": [
-        { "name": "Cursor", "url": "https://www.cursor.com" },
-        { "name": "Claude Code", "url": "localapp://claude-code", "local": true }
+        { "name": "Cursor", "url": "https://www.cursor.com" }
       ]
     },
     {

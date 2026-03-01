@@ -4,6 +4,8 @@
 
 Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund stellt und den schnellen Aufruf passender Tools ermöglicht. Die Seite läuft vollständig lokal (kein Server erforderlich) und wird über einen Browser-Favoriten geöffnet.
 
+Tools sind entweder **Web-Apps** (direkter URL-Aufruf im Browser) oder **lokale Desktop-Apps** (Windows-Programme, die über einen einmalig installierten Protokoll-Handler gestartet werden).
+
 ---
 
 ## Technologie-Stack
@@ -14,6 +16,7 @@ Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund st
 - **Icons:** PNG-Dateien (1024×1024), generiert mit DALL·E 3, gespeichert unter `./icons/`
 - **Icon-Generierung:** Python-Skript (`generate_icons.py`) ruft OpenAI Images API auf
 - **Konfiguration:** `.env`-Datei mit `OPENAI_API_KEY`
+- **Lokale Apps:** `launchers/local-apps.js` (Browser-Liste) + `launchers/apps.json` (Exe-Pfade) + `launchers/universal-launcher.ps1` (Startskript)
 
 ---
 
@@ -28,12 +31,18 @@ Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund st
 ├── style.css               # Gemeinsames Stylesheet
 ├── data.json               # Standard-Konfiguration (Anwendungsfälle + Tools)
 ├── generate_icons.py       # Icon-Generator (DALL·E 3)
+├── favicon.svg             # Browser-Tab-Icon
 ├── .env                    # OPENAI_API_KEY (nicht einchecken)
 ├── .gitignore
-└── icons/
-    ├── icon_01.png
-    ├── icon_02.png
-    └── ... (bis icon_10.png)
+├── icons/
+│   ├── icon_01_dokumente.png
+│   └── ... (bis icon_10_praesentation.png)
+└── launchers/
+    ├── local-apps.js           # Browser-Liste der lokalen Apps (als <script> geladen)
+    ├── apps.json               # Exe-Pfade für den PowerShell-Launcher
+    ├── universal-launcher.ps1  # Startet lokale Apps anhand von apps.json
+    ├── localapp-launcher.bat   # Wrapper: ruft universal-launcher.ps1 auf
+    └── install-protocol-handler.ps1  # Registriert localapp:// in der Windows-Registry (einmalig)
 ```
 
 ---
@@ -45,11 +54,11 @@ Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund st
 - Große Icon-Kacheln im Grid-Layout (3–4 Spalten, responsive)
 - Jede Kachel zeigt: Icon + Name des Anwendungsfalls
 - Hover-Effekt: kurze Beschreibung + verfügbare Tools einblenden
-- Klick auf Kachel → öffnet Tool-Auswahl (Modal oder Submenu)
+- Klick auf Kachel → öffnet Tool-Auswahl (Modal)
 
-### Tool-Auswahl
-- Klick auf einen Anwendungsfall → Modal mit allen verknüpften Tools
-- Jedes Tool: Name + Icon (Favicon) + direkter Link (öffnet in neuem Tab)
+### Tool-Auswahl im Modal
+- **Web-Tools:** Name + Favicon + direkter Link (öffnet in neuem Tab)
+- **Lokale Apps:** Name + Desktop-Icon (💻) + „Starten"-Button → startet das Programm via `localapp://` Protokoll
 
 ### Navigation
 - Oben rechts: Zahnrad-Icon → Link zu `settings.html` ("Einstellungen")
@@ -60,13 +69,102 @@ Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund st
 
 ### Funktionen
 - **Anwendungsfälle verwalten:** Hinzufügen, umbenennen, löschen, Reihenfolge ändern
-- **Tools verwalten:** Pro Anwendungsfall Tools hinzufügen (Name + URL), entfernen
-- **Icon zuweisen:** Upload eigener Icons oder Auswahl aus vorhandenen `./icons/`-Dateien
+- **Tools verwalten:** Pro Anwendungsfall Tools hinzufügen, entfernen
+  - **Web-Tool:** Name + URL eingeben
+  - **Lokale App:** Checkbox „Lokale App" aktivieren → Dropdown mit verfügbaren Desktop-Apps erscheint
+- **Icon zuweisen:** Pfad zu einer PNG-Datei unter `./icons/` eintragen
 - **Speichern:** Konfiguration in `localStorage` persistieren
 - **Export/Import:** Konfiguration als JSON exportieren/importieren (Backup)
+- **Reset:** Auf Standard-Konfiguration zurücksetzen
 
 ### Zugang
 - Link auf der Startseite: Zahnrad-Icon oben rechts → `settings.html`
+
+---
+
+## Lokale Desktop-Apps
+
+### Konzept
+
+Das System unterscheidet zwei Tool-Typen:
+
+| Typ | Merkmal | Beispiel |
+|-----|---------|---------|
+| Web-Tool | URL (https://...) | NotebookLM, Claude, Perplexity Web |
+| Lokale App | `"local": true` + URL `localapp://key` | Perplexity Desktop, Claude Desktop, Comet |
+
+Terminal-Anwendungen (CLI-Tools) sind **nicht Teil des Projekts**.
+
+### Zwei-Datei-Prinzip
+
+**Problem:** Browser-`file://`-Seiten können keine lokalen Dateien per `fetch()` laden.
+
+**Lösung:** Zwei getrennte Dateien mit unterschiedlichen Rollen:
+
+| Datei | Geladen von | Inhalt |
+|-------|-------------|--------|
+| `launchers/local-apps.js` | Browser (als `<script>`-Tag) | Name, Key, Emoji-Icon aller Apps – für das Dropdown in den Einstellungen |
+| `launchers/apps.json` | PowerShell-Launcher | Exe-Pfade und App-IDs – für den tatsächlichen Start |
+
+Beide Dateien müssen synchron gehalten werden, wenn eine neue App hinzugefügt wird.
+
+### `launchers/local-apps.js` (Browser-Liste)
+
+```javascript
+// Globale Variable – wird von index.html und settings.html als <script> geladen
+const LOCAL_APPS = [
+  { key: 'claude-desktop', name: 'Claude Desktop', icon: '🤖' },
+  { key: 'perplexity',     name: 'Perplexity',      icon: '🔍' },
+  { key: 'comet',          name: 'Comet Browser',   icon: '🌐' }
+];
+```
+
+### `launchers/apps.json` (Exe-Pfade für Launcher)
+
+```json
+{
+  "claude-desktop": {
+    "type": "appid",
+    "appid": "Claude_pzs8sxrjxfjjc!Claude"
+  },
+  "perplexity": {
+    "type": "exe",
+    "path": "%LOCALAPPDATA%\\Programs\\Perplexity\\Perplexity.exe"
+  },
+  "comet": {
+    "type": "exe",
+    "path": "%LOCALAPPDATA%\\Perplexity\\Comet\\Application\\comet.exe"
+  }
+}
+```
+
+Unterstützte Typen in `apps.json`:
+- `"type": "exe"` – direkter Start einer `.exe`-Datei; `%APPDATA%`, `%LOCALAPPDATA%` etc. werden expandiert
+- `"type": "appid"` – Start einer Windows Store/MSIX-App über ihre AppUserModelId
+
+### Protokoll-Handler (`localapp://`)
+
+- Einmalig auf dem Rechner zu installieren: **Rechtsklick auf `launchers/install-protocol-handler.ps1` → „Mit PowerShell ausführen"**
+- Registriert den Schlüssel `HKCU\SOFTWARE\Classes\localapp` (kein Admin-Recht nötig)
+- Der Handler ruft `localapp-launcher.bat` auf, das `universal-launcher.ps1 -Url "%1"` aufruft
+- `universal-launcher.ps1` liest `apps.json`, findet den passenden Eintrag und startet die App
+
+### Ablauf: Klick auf lokale App
+
+```
+Browser (index.html)
+  → Klick auf "Starten" (a href="localapp://perplexity")
+  → Windows-Registry: localapp:// → localapp-launcher.bat
+  → localapp-launcher.bat → powershell.exe universal-launcher.ps1 -Url "localapp://perplexity"
+  → universal-launcher.ps1 → liest apps.json → Start-Process Perplexity.exe
+```
+
+### Neue App hinzufügen (Workflow)
+
+1. Exe-Pfad herausfinden (z. B. per Windows Explorer oder Suchbefehl)
+2. Eintrag in `launchers/apps.json` ergänzen
+3. Eintrag in `launchers/local-apps.js` ergänzen (key, name, icon)
+4. In den Einstellungen der Startseite: Tool hinzufügen → „Lokale App" ankreuzen → App aus Dropdown wählen
 
 ---
 
@@ -87,103 +185,14 @@ Lokale Browser-Startseite, die KI-Anwendungsfälle visuell in den Vordergrund st
 | 9 | Videogenerierung & Werbefilme | Google Flow (mit Veo) | video generation advertising |
 | 10 | Präsentationserstellung | Gamma (gamma.app) | AI presentation creation |
 
-### Vollständige `data.json` Struktur
+### Tool-Objekt-Format in `data.json`
 
 ```json
-{
-  "usecases": [
-    {
-      "id": 1,
-      "name": "Dokumenten-Recherche & Lernen",
-      "icon": "icons/icon_01.png",
-      "description": "Analyse von Branchenreports und PDFs, Mustererkennung in Call-Transkripten, Zusammenfassen von Podcasts/Videos zu Audio-Overviews, quellenbasiertes Arbeiten ohne Halluzinationen",
-      "tools": [
-        { "name": "NotebookLM", "url": "https://notebooklm.google.com" }
-      ]
-    },
-    {
-      "id": 2,
-      "name": "Web-Recherche & Daten-Scraping",
-      "icon": "icons/icon_02.png",
-      "description": "Schnelle Faktenprüfung im Web, Zusammenfassen von Webseiten via Browser-Assistent, Firmen recherchieren sowie Kontaktdaten scrapen und strukturiert in Tabellen aufbereiten",
-      "tools": [
-        { "name": "Perplexity", "url": "https://www.perplexity.ai" }
-      ]
-    },
-    {
-      "id": 3,
-      "name": "Texterstellung & Automatisierung",
-      "icon": "icons/icon_03.png",
-      "description": "Schreiben natürlicher Texte, Erstellen spezialisierter Workflows (\"Skills\") für Textprüfungen, automatische Datenbank- und CRM-Anbindung via Model Context Protocol (MCP) und On-the-fly-Code-Generierung",
-      "tools": [
-        { "name": "Claude", "url": "https://claude.ai" }
-      ]
-    },
-    {
-      "id": 4,
-      "name": "Prozess-Automatisierung",
-      "icon": "icons/icon_04.png",
-      "description": "Lokale und quelloffene Automatisierung von Workflows, z. B. CRM-Updates, Leadgenerierung, Datenanreicherung, Social Media Automatisierung, Onboarding-Prozesse und Belegerkennung",
-      "tools": [
-        { "name": "n8n", "url": "https://n8n.io" }
-      ]
-    },
-    {
-      "id": 5,
-      "name": "Prototyping & MVPs (ohne Code)",
-      "icon": "icons/icon_05.png",
-      "description": "Schnelles visuelles Testen und Bauen von App-Prototypen (z. B. für Projektmanagement) in einer Sandbox, Erstellung von Frontends zur Kundenpräsentation ohne Programmierkenntnisse",
-      "tools": [
-        { "name": "Google AI Studio", "url": "https://aistudio.google.com" }
-      ]
-    },
-    {
-      "id": 6,
-      "name": "App-Entwicklung & Programmierung",
-      "icon": "icons/icon_06.png",
-      "description": "Aus Prototypen voll funktionsfähige Apps bauen, automatisiertes Coden und Bug-Fixing durch KI-Agenten (\"Agent Mode\"), ohne selbst Code schreiben zu müssen",
-      "tools": [
-        { "name": "Cursor", "url": "https://www.cursor.com" }
-      ]
-    },
-    {
-      "id": 7,
-      "name": "Lokale Corporate LLMs (Datenschutz)",
-      "icon": "icons/icon_07.png",
-      "description": "Aufbau von KI-Systemen für internes Firmenwissen, lokale und komplett DSGVO-konforme Verarbeitung sensibler Daten (z. B. Patienten- oder Finanzdaten) auf eigenen Servern",
-      "tools": [
-        { "name": "Ollama", "url": "https://ollama.com" }
-      ]
-    },
-    {
-      "id": 8,
-      "name": "Voice AI & KI-Sprachagenten",
-      "icon": "icons/icon_08.png",
-      "description": "Vertonung von Videos mit mehreren Sprechern und Soundeffekten (\"Voiceover Studio\"), Erstellung natürlich klingender KI-Telefon-Agenten für z. B. Rezeptionen, Outbound-Sales, Leads-Generierung oder Terminverwaltung",
-      "tools": [
-        { "name": "ElevenLabs", "url": "https://elevenlabs.io" }
-      ]
-    },
-    {
-      "id": 9,
-      "name": "Videogenerierung & Werbefilme",
-      "icon": "icons/icon_09.png",
-      "description": "Erstellung von cinematischen Clips, Werbespots und Erklärvideos aus einfachen Storyboards oder Fotos, Sicherstellung von Charakter- und Produktkonsistenz über mehrere Szenen hinweg",
-      "tools": [
-        { "name": "Google Flow (Veo)", "url": "https://flow.google" }
-      ]
-    },
-    {
-      "id": 10,
-      "name": "Präsentationserstellung",
-      "icon": "icons/icon_10.png",
-      "description": "Automatische Generierung von Pitch-Decks, Exposés oder Marketingunterlagen aus Notizen, Reports oder Meeting-Transkripten inklusive visuellem Design in wenigen Minuten",
-      "tools": [
-        { "name": "Gamma", "url": "https://gamma.app" }
-      ]
-    }
-  ]
-}
+// Web-Tool:
+{ "name": "NotebookLM", "url": "https://notebooklm.google.com" }
+
+// Lokale App:
+{ "name": "Perplexity Desktop", "url": "localapp://perplexity", "local": true }
 ```
 
 ---
@@ -263,10 +272,9 @@ with bright highlights. No text.
 ### Icon-Generator (`generate_icons.py`)
 
 - Liest `OPENAI_API_KEY` aus `.env`
-- Liest alle Anwendungsfälle aus `data.json`
 - Generiert für jeden Anwendungsfall einen DALL·E-3-Prompt
 - Ruft OpenAI Images API auf: Modell `dall-e-3`, Size `1024x1024`, Quality `standard`
-- Speichert Bilder als `icons/icon_01.png` bis `icons/icon_10.png`
+- Speichert Bilder als `icons/icon_NN_name.png`
 
 ---
 
@@ -280,23 +288,32 @@ with bright highlights. No text.
 | Kachel-Größe | 180×180px (Desktop), responsive kleinere Breakpoints |
 | Kachel-Stil | Abgerundete Ecken, leichter Glow-Effekt |
 | Hover | Sanfte Vergrößerung + Tool-Namen einblenden |
+| Lokale App (Modal) | Lila Akzent (`--purple`), Badge „Starten ↗" |
 
 ---
 
 ## Implementierungsreihenfolge
 
-1. **`data.json`** – Aus CLAUDE.md übernehmen (alle 10 Anwendungsfälle vollständig definiert)
+1. **`data.json`** – Aus CLAUDE.md übernehmen (alle 10 Anwendungsfälle)
 2. **`generate_icons.py`** – Icon-Generator erstellen und alle Icons generieren
 3. **`style.css`** – Gemeinsames Stylesheet mit Dark-Mode-Design
 4. **`index.html` + `app.js`** – Startseite mit Kacheln und Tool-Modal
 5. **`settings.html` + `settings.js`** – Wartungsoberfläche
-6. **Testing** – Öffnen als `file://`, Favorit im Browser anlegen
+6. **`launchers/local-apps.js`** – Browser-Liste der lokalen Apps
+7. **`launchers/apps.json`** – Exe-Pfade (manuell oder per Skript ermittelt)
+8. **`launchers/universal-launcher.ps1`** + **`localapp-launcher.bat`** – Launcher-Skripte
+9. **`launchers/install-protocol-handler.ps1`** – Protokoll-Handler registrieren (einmalig)
+10. **Testing** – Öffnen als `file://`, Favorit im Browser anlegen
 
 ---
 
 ## Wichtige Hinweise
 
 - `.env` enthält den OpenAI API Key → **nicht in Git einchecken** (in `.gitignore`)
+- `icons/` wird ebenfalls nicht eingecheckt (groß, generiert)
 - Die Seite funktioniert als `file://`-URL ohne lokalen Webserver
 - `localStorage` wird als Datenspeicher genutzt; `data.json` ist nur der Initialzustand
 - Alle externen Tool-Links öffnen in `target="_blank"`
+- Der `localapp://`-Protokoll-Handler muss **einmalig pro Rechner** installiert werden
+- Terminal-Apps (CLI-Tools) werden **nicht unterstützt** – nur Desktop-Apps mit GUI
+- Wenn eine neue lokale App hinzugefügt wird: **beide Dateien aktualisieren** (`apps.json` UND `local-apps.js`)

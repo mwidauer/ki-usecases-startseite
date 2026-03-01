@@ -1,6 +1,9 @@
 # Claude Code interne Dateien
 .claude/
 
+# Persönliche Notizen & Retrospektiven (nur lokal)
+Lessons Learned/
+
 # Persönliche Konfiguration (im personal-Branch committen, nicht in main)
 user-config.json
 server.json

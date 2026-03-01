@@ -1,0 +1,32 @@
+# Claude Code interne Dateien
+.claude/
+
+# Secrets & Umgebungsvariablen
+.env
+.env.local
+.env.*.local
+
+# Generierte Icons (werden per Skript neu erstellt)
+icons/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

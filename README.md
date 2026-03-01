@@ -294,9 +294,25 @@ with bright highlights. No text.
 
 ---
 
+## Port anpassen
+
+Der Server läuft standardmäßig auf Port **8080**. Falls dieser Port bereits belegt ist, kann er über eine optionale Datei `server.json` im Projektordner geändert werden:
+
+```json
+{ "port": 8081 }
+```
+
+Die Datei wird beim Start automatisch eingelesen. Danach den Browser-Favoriten entsprechend anpassen (`http://localhost:8081`).
+
+> `server.json` ist in `.gitignore` – die Einstellung bleibt lokal und wird nicht ins Repository eingecheckt.
+>
+> **Hinweis zur Firewall:** Der Server bindet ausschließlich an `localhost` (127.0.0.1) und ist nur vom eigenen Rechner erreichbar. Windows Firewall ist dabei nicht betroffen, unabhängig vom gewählten Port.
+
+---
+
 ## Hinweise
 
-- `.env`, `user-config.json` und `python/` sind in `.gitignore` und werden nicht eingecheckt
+- `.env`, `user-config.json`, `server.json` und `python/` sind in `.gitignore` und werden nicht eingecheckt
 - `user-config.json` enthält die persönliche Konfiguration; `data.json` ist die Vorlage beim ersten Start
 - `python/` wird automatisch durch `start.bat` heruntergeladen wenn kein System-Python gefunden wird
 - Der `localapp://`-Protokoll-Handler wird nur unter **Windows** benötigt

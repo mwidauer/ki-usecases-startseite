@@ -3,6 +3,7 @@
 
 # Persönliche Konfiguration (im personal-Branch committen, nicht in main)
 user-config.json
+server.json
 
 # Eingebettetes Python (automatisch heruntergeladen durch start.bat)
 python/

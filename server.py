@@ -19,7 +19,15 @@ from pathlib import Path
 BASE_DIR    = Path(__file__).parent
 CONFIG_FILE = BASE_DIR / 'user-config.json'
 DEFAULT_CFG = BASE_DIR / 'data.json'
-PORT        = 8080
+
+# Port: Standard 8080, überschreibbar via server.json → {"port": 8081}
+PORT = 8080
+_server_cfg = BASE_DIR / 'server.json'
+if _server_cfg.exists():
+    try:
+        PORT = int(json.loads(_server_cfg.read_text()).get('port', PORT))
+    except Exception:
+        pass
 
 
 class Handler(SimpleHTTPRequestHandler):

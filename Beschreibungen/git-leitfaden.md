@@ -120,7 +120,125 @@ git push --force-with-lease origin personal
 
 ---
 
-## Teil 2: Konkrete Handlungsempfehlungen
+## Teil 2: Das Projekt selbst nutzen und weiterentwickeln
+
+Dieses Repository ist öffentlich – jeder kann es lesen und herunterladen.
+Schreibzugriff auf `main` und `personal` hat aber ausschließlich der Eigentümer.
+
+### Berechtigungen auf einen Blick
+
+| Aktion | Jeder | Eigentümer |
+|--------|-------|------------|
+| Repository ansehen | ✅ | ✅ |
+| Klonen / herunterladen | ✅ | ✅ |
+| Pull Request stellen | ✅ | ✅ |
+| Direkt auf `main` / `personal` pushen | ❌ | ✅ |
+
+Wer das Projekt nutzen oder weiterentwickeln möchte, hat zwei Möglichkeiten:
+
+---
+
+### Option A: Nur lokal nutzen (kein GitHub-Account nötig)
+
+Repository herunterladen, lokal anpassen – fertig. Kein Git-Wissen erforderlich.
+
+```bash
+git clone https://github.com/mwidauer/ki-usecases-startseite.git
+cd ki-usecases-startseite
+```
+
+Dann `start.bat` ausführen und die Einstellungsseite für eigene Anpassungen nutzen.
+Die persönliche Konfiguration (`user-config.json`) bleibt vollständig lokal.
+
+---
+
+### Option B: Fork – eigene Kopie auf GitHub anlegen *(empfohlen)*
+
+Ein **Fork** erstellt eine vollständige, unabhängige Kopie des Repositories im
+eigenen GitHub-Account. Änderungen dort beeinflussen das Original nicht.
+
+**Schritt 1 – Fork auf GitHub erstellen**
+
+Auf `https://github.com/mwidauer/ki-usecases-startseite` oben rechts auf
+**„Fork"** klicken. GitHub erstellt sofort eine eigene Kopie:
+
+```
+Original:  mwidauer/ki-usecases-startseite
+Fork:      dein-name/ki-usecases-startseite
+```
+
+**Schritt 2 – Fork lokal klonen**
+
+```bash
+git clone https://github.com/dein-name/ki-usecases-startseite.git
+cd ki-usecases-startseite
+```
+
+**Schritt 3 – Eigenen personal-Branch anlegen**
+
+```bash
+git checkout -b personal
+
+# apps.json und local-apps.js mit eigenen Apps befüllen
+# (siehe README: Lokale Desktop-Apps hinzufügen)
+
+git add launchers/apps.json launchers/local-apps.js
+git commit -m "personal: Eigene Apps konfiguriert"
+git push origin personal
+```
+
+Ab jetzt hat man ein vollständiges `main` + `personal` im eigenen Account –
+identisch zur Struktur des Originals, aber vollständig unabhängig.
+
+---
+
+### Updates vom Original übernehmen
+
+Wenn das Original-Repository (`mwidauer/ki-usecases-startseite`) neue Features
+oder Bugfixes bekommt, können diese in den eigenen Fork übernommen werden:
+
+```bash
+# Einmalig: Original als "upstream" eintragen
+git remote add upstream https://github.com/mwidauer/ki-usecases-startseite.git
+
+# Neueste Änderungen vom Original holen
+git fetch upstream
+
+# Eigenen main auf Stand des Originals bringen
+git checkout main
+git merge upstream/main
+git push origin main
+
+# personal nachziehen
+git checkout personal
+git rebase main
+git push --force-with-lease origin personal
+```
+
+---
+
+### Verbesserungen ans Original zurückgeben (Pull Request)
+
+Wer einen Bugfix oder eine neue Funktion entwickelt hat und sie dem Original-
+Projekt zur Verfügung stellen möchte, erstellt einen **Pull Request**:
+
+1. Änderung auf einem eigenen Branch im Fork committen
+2. Auf GitHub: „Contribute" → „Open pull request"
+3. Beschreibung schreiben, was und warum geändert wurde
+4. Der Eigentümer prüft den Vorschlag und entscheidet ob er übernommen wird
+
+```
+Fork:     dein-name/ki-usecases-startseite  (Änderung auf Branch "fix/...")
+    ↓  Pull Request
+Original: mwidauer/ki-usecases-startseite   (Eigentümer prüft und merged)
+```
+
+Der Eigentümer bleibt immer Gatekeeper – niemand kann Änderungen am Original
+erzwingen.
+
+---
+
+## Teil 3: Konkrete Handlungsempfehlungen
 
 ### Usecase A: Neue Kategorie + Icon in den Einstellungen hinzufügen
 
@@ -332,7 +450,7 @@ git push --force-with-lease origin main
 
 ---
 
-## Teil 3: Dieses Dokument als Beispiel
+## Teil 4: Dieses Dokument als Beispiel
 
 Die Git-Empfehlungen in diesem Dokument entstammen direkt aus der Entwicklung
 dieses Projekts. Das folgende Beispiel zeigt, wie die Frage nach dem git-Workflow
@@ -362,7 +480,7 @@ Das `-f` steht für `--force` und überschreibt die .gitignore-Regel lokal.
 
 ---
 
-## Schnellreferenz: Die häufigsten Befehle
+## Teil 5: Schnellreferenz – Die häufigsten Befehle
 
 ```bash
 # Status prüfen
